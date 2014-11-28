@@ -23,9 +23,13 @@ var node = Elem.el('div', { className: 'col-md-6' }, [
 Elem.render(MyAwesomeNode, '#container');
 ```
 
-Attributes use camelcase shaped keys. So something like `backgroundColor` will be rendered as `background-color`. Also, you can notice that the `class` attribute is named `className`. 
+As you construct the node tree with functions and arrays, it is prettry easy to map and filter model objects to render your components easily (see the Todo List example above).
+
+Attributes use camel case shaped keys, so something like `backgroundColor` will be rendered as `background-color`. Also, you can notice that the `class` attribute is named `className`. Also, you can provide an object for `className` value with boolean as values. Every key with a false value will not be rendered.
 
 As children are just nodes in an array, it is really easy to add or remove elements from your UI. You can also pass undefined elements or functions that can return undefined to not render nodes.
+
+If you want to provide a child as HTML value, just pass an object like `{__asHtml: '&nbsp;;-)'}`.
 
 You can also attach callback to event on elements like 
 
@@ -226,3 +230,19 @@ and use it like
   <todo-list></todo-list>
 </div>
 ```
+
+API
+----------
+
+* Elem.el : `function(name, attributes, children)` : Create a representation of an HTML element. Children can be a string/number/boolean, an `Elem.el`, an array of `Elem.el` or a `__asHtml` object.
+* Elem.sel : `function(name, children)` : Create a representation of a simple HTML element
+* Elem.cel : `function(name, attributes)` : Create a representation of a void HTML element
+* Elem.nbsp : `function(times)` : creates a `<span>` containing one or more `&nbsp;`
+* Elem.text : `function(value)` : creates a `<span>value</span>`
+* Elem.elements : `function(elem, ...)` : creates an array or `Elem.el` based on function args
+* Elem.render : `function(elem, container)` : render an element to a container in the DOM
+* Elem.renderToString : `function(elem)` : render an element as an HTML string
+* Elem.component : `function(options)` : render a component and return its state
+* Elem.state : `function(defaultValues)` : create a state object. Similar to Backbone models
+* Elem.registerWebComponent : `function(elemName, options)` : register a component as a webcomponent.
+
