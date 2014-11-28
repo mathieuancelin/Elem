@@ -26,8 +26,7 @@ var Elem = Elem || {};
         return attrsArray.join(' ');
     }
 
-    /* Handle class as object with boolean values */
-    function classToArray(attrs) {
+    function classToArray(attrs) { /* Handle class as object with boolean values */
         if (_.isUndefined(attrs)) return [];
         var attrsArray = _.map(_.keys(attrs), function(key) {
             var value = attrs[key];
@@ -135,9 +134,7 @@ var Elem = Elem || {};
         var selfCloseTag = _.contains(voidElements, name.toUpperCase()) && _.isUndefined(children);
         var attrsArray = attributesToArray(attrs);
         attrsArray.push(extractAttribute('data-nodeid', _.escape(nodeId)));
-        if (debug) {
-            attrsArray.push(extractAttribute('title', _.escape(nodeId)));
-        }
+        if (debug) attrsArray.push(extractAttribute('title', _.escape(nodeId)));
         return {
             name: name,
             attrs: attrs,
@@ -205,48 +202,6 @@ var Elem = Elem || {};
             return [];
         }
     }   
-    
-    exports.state = function(mod) {
-        var theModel = _.extend({}, mod || {});
-        var callbacks = [];
-        var lastCallbacks = [];
-        function fireCallbacks(key, value) { 
-            _.each(callbacks, function(callback) { callback(key, value); }); 
-            _.each(lastCallbacks, function(callback) { callback(key, value); }); 
-        }
-        return {
-            __id: _.uniqueId('state-'), 
-            on: function(what, callback) { callbacks.push(callback); },
-            onChange: function(callback) { callbacks.push(callback); },
-            atLast: function(callback) { lastCallbacks.push(callback); },
-            set: function(key, value, propagate) {
-                if (_.isUndefined(value) && _.isUndefined(propagate) && _.isObject(key)) {
-                    _.map(_.keys(key), function(k) {
-                        theModel[k] = key[k];
-                        fireCallbacks(k, key[k]);   
-                    });
-                } else if (_.isUndefined(propagate) && _.isObject(key)) {
-                    _.map(_.keys(key), function(k) {
-                        theModel[k] = key[k];
-                        if (value !== false) fireCallbacks(k, key[k]);   
-                    });
-                } else if (_.isUndefined(propagate) && !_.isObject(key)) {
-                    theModel[key] = value;
-                    if (value !== false) fireCallbacks(key, value);
-                } else {
-                    theModel[key] = value;
-                    if (propagate !== false) fireCallbacks(key, value);
-                }
-            },
-            get: function(key) { return theModel[key]; },
-            refresh: function() { fireCallbacks('__refresh', {}); },
-            remove: function(key) {
-                delete theModel[key];
-                fireCallbacks(key, 'deleted');
-            },
-            toJson: function() { return _.clone(theModel); }
-        };
-    };
     exports.el = el;
     exports.sel = function(name, children) { return el(name, {}, children); }; // simple node sel(name, children)
     exports.cel = function(name, attrs) { return el(name, attrs, []); }; // node without content, cel(name, attrs)
@@ -288,7 +243,7 @@ var Elem = Elem || {};
         var eventCallbacks = {};
         var oldHandlers = [];
         if (opts.init) { opts.init(state, _.clone(props)); }
-        $(el).on(events/* + ' ' + mouseEvents */, function(e) { // bubbles listener, TODO : handle mouse event in a clever way
+        $(el).on(events + ' ' + mouseEvents, function(e) { // bubbles listener, TODO : handle mouse event in a clever way
             var node = e.target;
             var name = node.dataset.nodeid + "_" + e.type;
             if (eventCallbacks[name]) {
@@ -334,5 +289,46 @@ var Elem = Elem || {};
             state.on('all', rerender); // Do we really need to handle BackBone models
         }
         return state;
+    };
+    exports.state = function(mod) {
+        var theModel = _.extend({}, mod || {});
+        var callbacks = [];
+        var lastCallbacks = [];
+        function fireCallbacks(key, value) { 
+            _.each(callbacks, function(callback) { callback(key, value); }); 
+            _.each(lastCallbacks, function(callback) { callback(key, value); }); 
+        }
+        return {
+            __id: _.uniqueId('state-'), 
+            on: function(what, callback) { callbacks.push(callback); },
+            onChange: function(callback) { callbacks.push(callback); },
+            atLast: function(callback) { lastCallbacks.push(callback); },
+            set: function(key, value, propagate) {
+                if (_.isUndefined(value) && _.isUndefined(propagate) && _.isObject(key)) {
+                    _.map(_.keys(key), function(k) {
+                        theModel[k] = key[k];
+                        fireCallbacks(k, key[k]);   
+                    });
+                } else if (_.isUndefined(propagate) && _.isObject(key)) {
+                    _.map(_.keys(key), function(k) {
+                        theModel[k] = key[k];
+                        if (value !== false) fireCallbacks(k, key[k]);   
+                    });
+                } else if (_.isUndefined(propagate) && !_.isObject(key)) {
+                    theModel[key] = value;
+                    if (value !== false) fireCallbacks(key, value);
+                } else {
+                    theModel[key] = value;
+                    if (propagate !== false) fireCallbacks(key, value);
+                }
+            },
+            get: function(key) { return theModel[key]; },
+            refresh: function() { fireCallbacks('__refresh', {}); },
+            remove: function(key) {
+                delete theModel[key];
+                fireCallbacks(key, 'deleted');
+            },
+            toJson: function() { return _.clone(theModel); }
+        };
     };
 })(Elem);
