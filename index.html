@@ -221,6 +221,7 @@
             console.log(Elem.renderToString(TextBox()));
             console.log(Elem.renderToString(RenderOnlyTodoApp));
             console.log(Elem.renderToString(TodoApp(Elem.state(), {})));
+            console.log(JSON.stringify(TodoApp(Elem.state(), {}), null, 2));
 
             function Displays(state, props) {
                 return Elem.el('div', { className: 'col-md-4' }, [

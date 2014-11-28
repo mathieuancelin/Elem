@@ -4,6 +4,7 @@ var Elem = Elem || {};
     var voidElements = ["AREA","BASE","BR","COL","COMMAND","EMBED","HR","IMG","INPUT","KEYGEN","LINK","META","PARAM","SOURCE","TRACK","WBR"];
     var mouseEvents = 'MouseDown MouseEnter MouseLeave MouseMove MouseOut MouseOver MouseUp'.toLowerCase();
     var events = 'Wheel Scroll TouchCancel TouchEnd TouchMove TouchStart Click DoubleClick Drag DragEnd DragEnter DragExit DragLeave DragOver DragStart Drop Change Input Submit Focus Blur KeyDown KeyPress KeyUp Copy Cut Paste'.toLowerCase();
+    
     function styleToString(attrs) {
         if (_.isUndefined(attrs)) return '';
         var attrsArray = _.map(_.keys(attrs), function(key) {
@@ -25,6 +26,7 @@ var Elem = Elem || {};
         return attrsArray.join(' ');
     }
 
+    /* Handle class as object with boolean values */
     function classToArray(attrs) {
         if (_.isUndefined(attrs)) return [];
         var attrsArray = _.map(_.keys(attrs), function(key) {
@@ -48,7 +50,7 @@ var Elem = Elem || {};
         return children || [];
     }
 
-    function fakeDoc() {
+    function stringifyDoc() {
         function node(name) { 
             var attrs = [];
             var children = [];
@@ -74,95 +76,110 @@ var Elem = Elem || {};
         };
     }
 
-    function appendAttributesToElement(element, node, context) {
-        if (_.isUndefined(node.attrs)) return '';
-        _.each(_.keys(node.attrs), function(key) {
-            var keyName = key.dasherize();
-            if (key === 'className') {
-                keyName = 'class';
-            }
+    function extractEventHandlers(attrs, nodeId, context) {
+        _.each(_.keys(attrs), function(key) {
+            var keyName = key.dasherize();  
             if (keyName.startsWith('on')) {
                 if (context && context.waitingHandlers) {
                     context.waitingHandlers.push({
                         root: context.root,
-                        id: node.__nodeId, 
+                        id: nodeId, 
                         event: keyName,
-                        callback: node.attrs[key]
+                        callback: attrs[key]
                     });
                 }
-            } else {
-                var value = node.attrs[key];
+            } 
+        });   
+    }
+
+    function extractAttribute(key, value) { return { key: key, value: value }; }
+
+    function attributesToArray(attrs) {
+        if (_.isUndefined(attrs)) return [];
+        var attrsArray = [];
+        _.each(_.keys(attrs), function(key) {
+            var keyName = key.dasherize();
+            if (key === 'className') {
+                keyName = 'class';
+            }
+            if (!keyName.startsWith('on')) {
+                var value = attrs[key];
                 if (!_.isUndefined(value) && _.isFunction(value)) {
                     value = value();
                 }
                 if (!_.isUndefined(value)) {
                     if (_.isObject(value) && keyName === 'style') {
-                        element.setAttribute('style', styleToString(value));
+                        attrsArray.push(extractAttribute('style', styleToString(value)));
                     } else if (_.isArray(value) && keyName === 'class') {
-                        element.setAttribute(keyName, value.join(' '));
+                        attrsArray.push(extractAttribute(keyName, value.join(' ')));
                     } else if (_.isObject(value) && keyName === 'class') {
-                        element.setAttribute(keyName, classToArray(value).join(' '));
+                        attrsArray.push(extractAttribute(keyName, classToArray(value).join(' ')));
                     } else {
-                        element.setAttribute(keyName, value);
+                        attrsArray.push(extractAttribute(keyName, value));
                     }
                 }
             }
         });
-    }
-
-    function toHtmlNode(node, doc, context) {
-        node.name = node.name || 'unknown';
-        node.attrs = node.attrs || {};
-        node.children = wrapChildren(node.children);
-        var selfCloseTag = _.contains(voidElements, node.name.toUpperCase()) && _.isUndefined(node.children);
-        var element = doc.createElement(_.escape(node.name));
-        element.setAttribute('data-nodeid', _.escape(node.__nodeId));
-        if (debug) {
-            element.setAttribute('title', _.escape(node.__nodeId));
-        }
-        appendAttributesToElement(element, node, context);
-        if (!selfCloseTag) {
-            if (_.isArray(node.children)) {
-                var elementsToHtml = _.chain(node.children).map(function(child) {
-                    if (_.isFunction(child)) {
-                        return child();
-                    } else {
-                        return child;
-                    }
-                }).filter(function(item) { 
-                    return !_.isUndefined(item); 
-                }).each(function(child) {
-                    element.appendChild(toHtmlNode(child, doc, context)); 
-                });
-            } else if (_.isNumber(node.children)) {
-                element.appendChild(doc.createTextNode(node.children + ''));
-            } else if (_.isString(node.children)) {
-                element.appendChild(doc.createTextNode(_.escape(node.children)));
-            } else if (_.isBoolean(node.children)) {
-                element.appendChild(doc.createTextNode(node.children + ''));
-            } else if (_.isObject(node.children) && node.children.__isElement) {
-                element.appendChild(toHtmlNode(node.children, doc, context)); 
-            } else if (_.isObject(node.children) && node.children.__asHtml) {
-                element.innerHTML = node.children.__asHtml;
-            } else if (_.isRegExp(node.children) || _.isUndefined(node.children) || _.isNull(node.children)) { // do nothing
-            } else {
-                element.appendChild(doc.createTextNode(node.children.toString()));
-            }
-        }
-        return element;
+        return attrsArray;
     }
 
     function el(name, attrs, children) {
+        var nodeId = _.uniqueId('node_');
         if (_.isUndefined(children) && !_.isUndefined(attrs) && !attrs.__isAttrs) {
             children = attrs;
             attrs = {};
         }
+        name = name || 'unknown';
+        attrs = attrs || {};
+        children = wrapChildren(children);
+        var selfCloseTag = _.contains(voidElements, name.toUpperCase()) && _.isUndefined(children);
+        var attrsArray = attributesToArray(attrs);
+        attrsArray.push(extractAttribute('data-nodeid', _.escape(nodeId)));
+        if (debug) {
+            attrsArray.push(extractAttribute('title', _.escape(nodeId)));
+        }
         return {
-            name: name || 'unknown',
-            attrs: attrs || {},
-            children: wrapChildren(children),
+            name: name,
+            attrs: attrs,
+            children: children,
             __isElement: true,
-            __nodeId: _.uniqueId('node_')
+            __nodeId: nodeId,
+            __toHtmlNode: function(doc, context) {
+                extractEventHandlers(attrs, nodeId, context);
+                var element = doc.createElement(_.escape(name));
+                _.each(attrsArray, function(item) {
+                    element.setAttribute(item.key, item.value);
+                });
+                if (!selfCloseTag) {
+                    if (_.isArray(children)) {
+                        var elementsToHtml = _.chain(children).map(function(child) {
+                            if (_.isFunction(child)) {
+                                return child();
+                            } else {
+                                return child;
+                            }
+                        }).filter(function(item) { 
+                            return !_.isUndefined(item); 
+                        }).each(function(child) {
+                            element.appendChild(child.__toHtmlNode(doc, context)); 
+                        });
+                    } else if (_.isNumber(children)) {
+                        element.appendChild(doc.createTextNode(children + ''));
+                    } else if (_.isString(children)) {
+                        element.appendChild(doc.createTextNode(_.escape(children)));
+                    } else if (_.isBoolean(children)) {
+                        element.appendChild(doc.createTextNode(children + ''));
+                    } else if (_.isObject(children) && children.__isElement) {
+                        element.appendChild(children.__toHtmlNode(doc, context)); 
+                    } else if (_.isObject(children) && children.__asHtml) {
+                        element.innerHTML = children.__asHtml;
+                    } else if (_.isRegExp(children) || _.isUndefined(children) || _.isNull(children)) { // do nothing
+                    } else {
+                        element.appendChild(doc.createTextNode(children.toString()));
+                    }
+                }
+                return element;
+            }
         };
     } 
 
@@ -179,10 +196,10 @@ var Elem = Elem || {};
                 }).filter(function (item) {
                     return !_.isUndefined(item);
                 }).map(function (item) {
-                    return toHtmlNode(item, doc, context);
+                    return item.__toHtmlNode(doc, context);
                 }).value();
             } else {
-                return [toHtmlNode(el, doc, context)];
+                return [el.__toHtmlNode(doc, context)];
             }
         } else {
             return [];
@@ -236,9 +253,7 @@ var Elem = Elem || {};
     exports.nbsp = function(times) { return el('span', { __asHtml: _.times(times || 1, function() { return '&nbsp;'; }) }); };
     exports.text = function(text) { return el('span', {}, text); };
     exports.renderToString = function(el, context) {
-        var doc = fakeDoc();
-        var htmlNode = renderToNode(el, doc);
-        return _.map(htmlNode, function(n) {
+        return _.map(renderToNode(el, stringifyDoc()), function(n) {
             return n.toHtmlString();
         }).join('');
     };
@@ -253,9 +268,7 @@ var Elem = Elem || {};
         if (_.isString(node)) {
             node = doc.querySelector(node);
         }
-        while (node.firstChild) {
-            node.removeChild(node.firstChild);
-        }
+        while (node.firstChild) { node.removeChild(node.firstChild); }
         _.each(htmlNode, function(n) {
             node.appendChild(n);
         });
