@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Demos</title>
+    </head>
+    <body>
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+        <div id="timer"></div>
+        <div id="demo1"></div>
+        <div id="demo2"></div>
+        <div id="demo3"></div>
+        <todo-list noShadow="true"></todo-list>
+        <todo-list noShadow="true"></todo-list>
+        <script src="./node_modules/jquery/dist/jquery.min.js" type="text/javascript"></script>
+        <script src="./node_modules/underscore/underscore-min.js" type="text/javascript"></script>
+        <script src="./node_modules/backbone/backbone-min.js" type="text/javascript"></script>
+        <script src="./node_modules/sugar/release/sugar-full.development.js" type="text/javascript"></script>
+        <script src="./elem.js" type="text/javascript"></script>
+        <script src="./elem-webcomp.js" type="text/javascript"></script>
+        <script type="text/javascript">
+        $(function() {
+            
+            var RenderOnlyTodoApp = Elem.el('div', { className: 'col-md-3' }, [
+                Elem.el('h3', 'Todo List'),
+                Elem.el('div',
+                    Elem.el('div', { className: 'row' },
+                        Elem.el('form', { role: 'form' }, [
+                            Elem.el('div', { className: ['form-group', 'col-md-10'] },
+                                Elem.el('input', {
+                                    placeholder: 'What do you have to do ?',
+                                    type: 'text', className: 'form-control', value: '',
+                                }, [])
+                            ),
+                            Elem.el('div', { className: 'form-group' },
+                                Elem.el('div', { className: 'btn-group' }, [
+                                    Elem.el('button', { type: 'button', className: 'btn btn-success' },
+                                        Elem.el('span', {
+                                            className: 'glyphicon glyphicon-floppy-saved'
+                                        }, [])
+                                    ),
+                                    Elem.el('button', { type: 'button', className: 'btn btn-danger' },
+                                        Elem.el('span', { className: 'glyphicon glyphicon-trash' }, [])
+                                    )
+                                ])
+                            )
+                        ])
+                    )
+                ),
+                Elem.el('ul', { className: 'list-group' }, [
+                    Elem.el('li', { className: 'list-group-item' },
+                        Elem.el('div', { className: 'row' }, [
+                            Elem.el('div', { className: 'col-md-10' }, 'Buy some beer'),
+                            Elem.el('div', { className: 'col-md-2' },
+                                Elem.el('span', { onclick: function() { alert('pouet'); }, className: { label: true, labelSuccess: true }, style: { cursor: 'pointer' } }, 'Done')
+                            )
+                        ])
+                    ),
+                    Elem.el('li', { className: 'list-group-item' },
+                        Elem.el('div', { className: 'row' }, [
+                            Elem.el('div', { className: 'col-md-10' }, 'Buy some pizza'),
+                            Elem.el('div', { className: 'col-md-2' },
+                                Elem.el('span', { className: { label: true, labelDefault: true }, style: { cursor: 'pointer' } }, 'Done')
+                            )
+                        ])
+                    )
+                ])
+            ]);
+        
+            function NewTask(state, props) {
+                function deleteAllDone() {
+                    var tasks = _.filter(state.get('tasks'), function(item) {
+                        return item.done === false;
+                    });
+                    state.set('tasks', tasks);
+                }
+                function createNewTask() {
+                    var tasks = state.get('tasks');
+                    if (state.get('text') !== '') {
+                        tasks.push({
+                            _id: _.uniqueId('task_'),
+                            name: state.get('text'),
+                            done: false
+                        });
+                        state.set('text', '', false);
+                        state.set('tasks', tasks);
+                    }
+                }
+                function storeName(e) {
+                    var text = e.target.value;
+                    state.set('text', text, false);
+                    if (e.keyCode === 13) {
+                        createNewTask();
+                        e.preventDefault();
+                    }
+                }
+                return Elem.el('div',
+                    Elem.el('div', { className: 'row' }, [
+                        Elem.el('form', { role: 'form' }, [
+                            Elem.el('div', { className: ['form-group', 'col-md-10'] },
+                                Elem.el('input', {
+                                    dataKey: state.get('key'),
+                                    onchange: storeName,
+                                    onkeyup: storeName,
+                                    onkeydown: storeName,
+                                    value: state.get('text'),
+                                    placeholder: 'What do you have to do ?',
+                                    type: 'text', className: 'form-control',
+                                }, [])
+                            ),
+                            Elem.el('div', { className: 'form-group' },
+                                Elem.el('div', { className: 'btn-group' }, [
+                                    Elem.el('button', { 
+                                            type: 'button', 
+                                            className: 'btn btn-success',
+                                            onclick: createNewTask
+                                        },
+                                        Elem.el('span', {
+                                            className: 'glyphicon glyphicon-floppy-saved'
+                                        }, [])
+                                    ),
+                                    Elem.el('button', { 
+                                            onclick: deleteAllDone,
+                                            type: 'button', 
+                                            className: 'btn btn-danger' 
+                                        },
+                                        Elem.el('span', { className: 'glyphicon glyphicon-trash' }, [])
+                                    )
+                                ])
+                            )
+                        ])]
+                    )
+                );    
+            }
+
+            function TaskItem(state, props) {
+                function flipTaskState() {
+                    var tasks = _.map(state.get('tasks'), function(item) {
+                        if (props.task._id === item._id) {
+                            var newTask = _.clone(item);
+                            newTask.done = !props.task.done;
+                            return newTask;
+                        }
+                        return item;
+                    });
+                    state.set('tasks', tasks);
+                }
+                return Elem.el('li', { className: 'list-group-item' },
+                    Elem.el('div', { className: 'row' }, [
+                        Elem.el('div', { className: 'col-md-10' }, props.task.name),
+                        Elem.el('div', { className: 'col-md-2' },
+                            Elem.el('span', { 
+                                onclick: flipTaskState, 
+                                className: { 
+                                    label: true, 
+                                    labelSuccess: props.task.done, 
+                                    labelDefault: !props.task.done 
+                                }, 
+                                style: { 
+                                    cursor: 'pointer' 
+                                } 
+                            }, 'Done')
+                        )
+                    ])
+                );
+            }
+
+            function TodoApp(state, props) {
+                return Elem.el('div', { className: 'col-md-4' }, [
+                    Elem.el('h3', 'Todo List'),
+                    NewTask(state, props),
+                    Elem.el('ul', { className: 'list-group' }, _.map(state.get('tasks'), function(task) {
+                        return TaskItem(state, { task: task});
+                    }))
+                ]);
+            }
+             
+            Elem.component({
+                container: '#demo1',
+                init: function(state, props) {
+                    state.set('tasks', []);
+                    state.set('text', '');
+                },
+                render: TodoApp
+            });
+
+            Elem.registerWebComponent('todo-list', {
+                init: function(state, props) {
+                    state.set('key', _.uniqueId('todolist-'));
+                    state.set('tasks', []);
+                    state.set('text', '');
+                },
+                render: TodoApp
+            });
+
+            var commonState = Elem.state({ name: 'Hello' });
+
+            function TextBox() {
+                function updateModel(e) {
+                    commonState.set('name', e.target.value);
+                }
+                return Elem.el('div', { className: 'col-md-4' }, [
+                    Elem.el('h3', 'Type your name here'),
+                    Elem.el('form', { role: 'form' }, [
+                        Elem.el('div', { className: ['form-group', 'col-md-10'] },
+                            Elem.el('input', {
+                                placeholder: 'Type your name',
+                                type: 'text', 
+                                className: 'form-control', 
+                                value: commonState.get('name'),
+                                onkeydown: updateModel,
+                                onkeyup: updateModel,
+                                onkeypress: updateModel,
+                                onkeychange: updateModel
+                            }, [])
+                        )
+                    ])
+                ]); 
+            }
+
+            Elem.render(TextBox(), '#demo2');
+            console.log(Elem.renderToString(TextBox()));
+            console.log(Elem.renderToString(RenderOnlyTodoApp));
+            console.log(Elem.renderToString(TodoApp(Elem.state(), {})));
+
+            function Displays(state, props) {
+                return Elem.el('div', { className: 'col-md-4' }, [
+                    Elem.el('h3', 'Displays'),
+                    Elem.el('ul', { className: 'list-group' }, [
+                        Elem.el('li', { className: 'list-group-item' }, 'Name : ' + state.get('name') || ''),
+                        Elem.el('li', { className: 'list-group-item' }, 'Name : ' + state.get('name') || ''),
+                        Elem.el('li', { className: 'list-group-item' }, 'Name : ' + state.get('name') || ''),
+                        Elem.el('li', { className: 'list-group-item' }, 'Name : ' + state.get('name') || ''),
+                    ])
+                ]);   
+            }
+
+            Elem.component({
+                container: '#demo3',
+                state: commonState,
+                render: Displays 
+            });
+
+            Elem.component({
+                container: '#timer',
+                init: function(state, props) {
+                    state.set('time', 0);
+                    setInterval(function() {
+                        state.set('time', state.get('time') + 1);
+                    }, 1000);
+                },
+                render: function(state, props) {
+                    return Elem.el('span', 'Elapsed : ' + state.get('time'));
+                }
+            });
+
+            function span(doc, value) {
+                var span = doc.createElement('span');
+                span.setAttribute('data-nodeid', _.escape(_.uniqueId('node_')));
+                var text = doc.createTextNode(value);
+                span.appendChild(text);
+                return span; 
+            }
+        });
+        </script>
+    </body>
+</html>

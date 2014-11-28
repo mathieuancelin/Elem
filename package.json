@@ -1,0 +1,21 @@
+{
+  "name": "Elem.js",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "backbone": "~1.1.2",
+    "jquery": "~2.1.1",
+    "underscore": "~1.7.0",
+    "sugar": "~1.4.1"
+  },
+  "devDependencies": {
+    "watchify": "2.1.1",
+    "browserify": "6.2.0",
+    "uglify-js": "~2.4.15"
+  },
+  "scripts": {
+    "build-elem": "uglifyjs elem.js > elem.min.js",
+    "build-webcomp": "uglifyjs elem-webcomp.js > elem-webcomp.min.js",
+    "build": "npm run build-elem & npm run build-webcomp"
+  }
+}
