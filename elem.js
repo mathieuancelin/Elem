@@ -141,6 +141,10 @@ var Elem = Elem || {};
             children: children,
             __isElement: true,
             __nodeId: nodeId,
+            __toJsonString: function(pretty) {
+                if (pretty) return JSON.stringify(this, null, 2);
+                return JSON.stringify(this);
+            },
             __toHtmlNode: function(doc, context) {
                 extractEventHandlers(attrs, nodeId, context);
                 var element = doc.createElement(_.escape(name));
@@ -208,9 +212,7 @@ var Elem = Elem || {};
     exports.nbsp = function(times) { return el('span', { __asHtml: _.times(times || 1, function() { return '&nbsp;'; }) }); };
     exports.text = function(text) { return el('span', {}, text); };
     exports.renderToString = function(el, context) {
-        return _.map(renderToNode(el, stringifyDoc()), function(n) {
-            return n.toHtmlString();
-        }).join('');
+        return _.map(renderToNode(el, stringifyDoc()), function(n) { return n.toHtmlString(); }).join('');
     };
     exports.elements = function() { return _.map(arguments, function(item) { return item; }); };
     exports.render = function(el, node, props) {

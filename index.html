@@ -173,7 +173,7 @@
                     }))
                 ]);
             }
-             
+
             Elem.component({
                 container: '#demo1',
                 init: function(state, props) {
@@ -218,10 +218,6 @@
             }
 
             Elem.render(TextBox(), '#demo2');
-            console.log(Elem.renderToString(TextBox()));
-            console.log(Elem.renderToString(RenderOnlyTodoApp));
-            console.log(Elem.renderToString(TodoApp(Elem.state(), {})));
-            console.log(JSON.stringify(TodoApp(Elem.state(), {}), null, 2));
 
             function Displays(state, props) {
                 return Elem.el('div', { className: 'col-md-4' }, [
@@ -253,6 +249,11 @@
                     return Elem.el('span', 'Elapsed : ' + state.get('time'));
                 }
             });
+
+            console.log(Elem.renderToString(TextBox()));
+            console.log(Elem.renderToString(RenderOnlyTodoApp));
+            console.log(Elem.renderToString(TodoApp(Elem.state(), {})));
+            console.log(TodoApp(Elem.state(), {}).__toJsonString(true));
 
             function span(doc, value) {
                 var span = doc.createElement('span');
