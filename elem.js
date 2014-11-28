@@ -305,6 +305,7 @@ var Elem = Elem || {};
             on: function(what, callback) { callbacks.push(callback); },
             onChange: function(callback) { callbacks.push(callback); },
             atLast: function(callback) { lastCallbacks.push(callback); },
+            silentSet: function(key, value) { this.set(key, value, false); },
             set: function(key, value, propagate) {
                 if (_.isUndefined(value) && _.isUndefined(propagate) && _.isObject(key)) {
                     _.map(_.keys(key), function(k) {

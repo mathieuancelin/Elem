@@ -81,13 +81,13 @@
                             name: state.get('text'),
                             done: false
                         });
-                        state.set('text', '', false);
+                        state.silentSet('text', '');
                         state.set('tasks', tasks);
                     }
                 }
                 function storeName(e) {
                     var text = e.target.value;
-                    state.set('text', text, false);
+                    state.silentSet('text', text);
                     if (e.keyCode === 13) {
                         createNewTask();
                         e.preventDefault();
