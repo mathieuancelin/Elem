@@ -55,7 +55,10 @@ function saySomething() {
 
 var node = Elem.el('div', { className: 'col-md-6' }, [
   Elem.el('h3', 'Hello World!'),
-  Elem.el('button', { className: ['btn', 'btn-primary'], onClick: saySomething }, 'Say something'),
+  Elem.el('button', { 
+      className: ['btn', 'btn-primary'], 
+      onClick: saySomething 
+    }, 'Say something'),
   Elem.el('p', { style: { backgroundColor: 'red' } }, "Lorem ipsum ....")
 ]);
 Elem.render(MyAwesomeNode, '#container');
