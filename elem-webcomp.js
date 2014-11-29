@@ -30,13 +30,14 @@ var Elem = Elem || {};
           container: node,
           init: elem.init,
           render: elem.render,
-          props: elem.props,
+          props: props,
           state: elem.state
         }); 
       }
     };
     ElementProto.attributeChangedCallback = function (attr, oldVal, newVal) {
       this.props[attr] = newVal;
+      var props = this.props;
       if (this.props.renderOnly && this.props.renderOnly === true) {
         this.renderedElement = Elem.render(elem, this._node); 
       } else {
@@ -44,7 +45,7 @@ var Elem = Elem || {};
           container: this._node,
           init: elem.init,
           render: elem.render,
-          props: elem.props,
+          props: props,
           state: elem.state
         });
       }

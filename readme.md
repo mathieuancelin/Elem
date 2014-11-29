@@ -11,12 +11,12 @@ API
 * `Elem.vel: function(name, attributes)` : Create a representation of a void HTML element
 * `Elem.nbsp: function(times)` : creates a `<span>` containing one or more `&nbsp;`
 * `Elem.text: function(value)` : creates a `<span>value</span>`
-* `Elem.elements: function(elem, ...)` : creates an array or `Elem.el` based on function args
+* `Elem.elements: function(elems...)` : creates an array or `Elem.el` based on function args
 * `Elem.render: function(elem, container)` : render an element to a container in the DOM
 * `Elem.renderToString: function(elem)` : render an element as an HTML string
-* `Elem.component: function(options)` : render a component and return its state
+* `Elem.component: function(options)` : render a component and return its state. See the component section for options
 * `Elem.state: function(defaultValues)` : create a state object. Similar to Backbone models
-* `Elem.registerWebComponent: `function(elemName, options)` : register a component as a webcomponent.
+* `Elem.registerWebComponent: `function(elemName, options)` : register a component as a webcomponent. See the webcomponent section for options.
 
 How can I use Elem.js ?
 ----------------------------
@@ -246,3 +246,13 @@ and use it like
 </div>
 ```
 
+when creating a webcomponent, you can define options like
+
+```javascript
+{
+    init: 'init function that receive the state and props as parameters' 
+    state: 'the state of the webcomponent. If undefined, an empty one will be created'
+    render: 'function that will return an Elem node'
+}
+```
+Properties of the webcomponent are defined with the HTML tag attributes. You can use a `renderOnly="true"` attribute to not redraw the webcomponent all the time. You can also use `noshadow="false"` to avoid rendering the component inside the shadow root of the webcomponent.
