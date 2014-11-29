@@ -253,7 +253,7 @@
             console.log(Elem.renderToString(TextBox()));
             console.log(Elem.renderToString(RenderOnlyTodoApp));
             console.log(Elem.renderToString(TodoApp(Elem.state(), {})));
-            console.log(TodoApp(Elem.state(), {}).__toJsonString(true));
+            console.log(TodoApp(Elem.state(), {}).toJsonString(true));
 
             function span(doc, value) {
                 var span = doc.createElement('span');

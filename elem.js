@@ -44,7 +44,7 @@ var Elem = Elem || {};
         if (children === 0) {
             return children;
         } else if (children === '') {
-            return children;
+            return [];
         }
         return children || [];
     }
@@ -91,7 +91,7 @@ var Elem = Elem || {};
         });   
     }
 
-    function extractAttribute(key, value) { return { key: key, value: value }; }
+    function asAttribute(key, value) { return { key: key, value: value }; }
 
     function attributesToArray(attrs) {
         if (_.isUndefined(attrs)) return [];
@@ -108,13 +108,13 @@ var Elem = Elem || {};
                 }
                 if (!_.isUndefined(value)) {
                     if (_.isObject(value) && keyName === 'style') {
-                        attrsArray.push(extractAttribute('style', styleToString(value)));
+                        attrsArray.push(asAttribute('style', styleToString(value)));
                     } else if (_.isArray(value) && keyName === 'class') {
-                        attrsArray.push(extractAttribute(keyName, value.join(' ')));
+                        attrsArray.push(asAttribute(keyName, value.join(' ')));
                     } else if (_.isObject(value) && keyName === 'class') {
-                        attrsArray.push(extractAttribute(keyName, classToArray(value).join(' ')));
+                        attrsArray.push(asAttribute(keyName, classToArray(value).join(' ')));
                     } else {
-                        attrsArray.push(extractAttribute(keyName, value));
+                        attrsArray.push(asAttribute(keyName, value));
                     }
                 }
             }
@@ -131,21 +131,33 @@ var Elem = Elem || {};
         name = name || 'unknown';
         attrs = attrs || {};
         children = wrapChildren(children);
-        var selfCloseTag = _.contains(voidElements, name.toUpperCase()) && _.isUndefined(children);
+        if (_.isRegExp(children) || _.isUndefined(children) || _.isNull(children)) children = []; 
+        if (_.isArray(children)) {
+            children = _.chain(children).map(function(child) {
+                if (_.isFunction(child)) {
+                    return child();
+                } else {
+                    return child;
+                }
+            }).filter(function(item) { 
+                return !_.isUndefined(item); 
+            }).value();
+        } 
+        var selfCloseTag = _.contains(voidElements, name.toUpperCase()) && (_.isUndefined(children) || (_.isArray(children) && children.length === 0));
         var attrsArray = attributesToArray(attrs);
-        attrsArray.push(extractAttribute('data-nodeid', _.escape(nodeId)));
-        if (debug) attrsArray.push(extractAttribute('title', _.escape(nodeId)));
+        attrsArray.push(asAttribute('data-nodeid', _.escape(nodeId)));
+        if (debug) attrsArray.push(asAttribute('title', _.escape(nodeId)));
         return {
             name: name,
             attrs: attrs,
             children: children,
-            __isElement: true,
-            __nodeId: nodeId,
-            __toJsonString: function(pretty) {
+            isElement: true,
+            nodeId: nodeId,
+            toJsonString: function(pretty) {
                 if (pretty) return JSON.stringify(this, null, 2);
                 return JSON.stringify(this);
             },
-            __toHtmlNode: function(doc, context) {
+            toHtmlNode: function(doc, context) {
                 extractEventHandlers(attrs, nodeId, context);
                 var element = doc.createElement(_.escape(name));
                 _.each(attrsArray, function(item) {
@@ -153,16 +165,8 @@ var Elem = Elem || {};
                 });
                 if (!selfCloseTag) {
                     if (_.isArray(children)) {
-                        var elementsToHtml = _.chain(children).map(function(child) {
-                            if (_.isFunction(child)) {
-                                return child();
-                            } else {
-                                return child;
-                            }
-                        }).filter(function(item) { 
-                            return !_.isUndefined(item); 
-                        }).each(function(child) {
-                            element.appendChild(child.__toHtmlNode(doc, context)); 
+                        _.each(children, function(child) {
+                            element.appendChild(child.toHtmlNode(doc, context)); 
                         });
                     } else if (_.isNumber(children)) {
                         element.appendChild(doc.createTextNode(children + ''));
@@ -170,11 +174,10 @@ var Elem = Elem || {};
                         element.appendChild(doc.createTextNode(_.escape(children)));
                     } else if (_.isBoolean(children)) {
                         element.appendChild(doc.createTextNode(children + ''));
-                    } else if (_.isObject(children) && children.__isElement) {
-                        element.appendChild(children.__toHtmlNode(doc, context)); 
+                    } else if (_.isObject(children) && children.isElement) {
+                        element.appendChild(children.toHtmlNode(doc, context)); 
                     } else if (_.isObject(children) && children.__asHtml) {
                         element.innerHTML = children.__asHtml;
-                    } else if (_.isRegExp(children) || _.isUndefined(children) || _.isNull(children)) { // do nothing
                     } else {
                         element.appendChild(doc.createTextNode(children.toString()));
                     }
@@ -197,10 +200,10 @@ var Elem = Elem || {};
                 }).filter(function (item) {
                     return !_.isUndefined(item);
                 }).map(function (item) {
-                    return item.__toHtmlNode(doc, context);
+                    return item.toHtmlNode(doc, context);
                 }).value();
             } else {
-                return [el.__toHtmlNode(doc, context)];
+                return [el.toHtmlNode(doc, context)];
             }
         } else {
             return [];
@@ -301,7 +304,7 @@ var Elem = Elem || {};
             _.each(lastCallbacks, function(callback) { callback(key, value); }); 
         }
         return {
-            __id: _.uniqueId('state-'), 
+            stateId: _.uniqueId('state-'), 
             on: function(what, callback) { callbacks.push(callback); },
             onChange: function(callback) { callbacks.push(callback); },
             atLast: function(callback) { lastCallbacks.push(callback); },
