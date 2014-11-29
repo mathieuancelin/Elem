@@ -211,7 +211,7 @@ var Elem = Elem || {};
     }   
     exports.el = el;
     exports.sel = function(name, children) { return el(name, {}, children); }; // simple node sel(name, children)
-    exports.cel = function(name, attrs) { return el(name, attrs, []); }; // node without content, cel(name, attrs)
+    exports.vel = function(name, attrs) { return el(name, attrs, []); }; // void node, cel(name, attrs)
     exports.nbsp = function(times) { return el('span', { __asHtml: _.times(times || 1, function() { return '&nbsp;'; }) }); };
     exports.text = function(text) { return el('span', {}, text); };
     exports.renderToString = function(el, context) {

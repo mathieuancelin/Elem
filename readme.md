@@ -236,7 +236,7 @@ API
 
 * Elem.el : `function(name, attributes, children)` : Create a representation of an HTML element. Children can be a string/number/boolean, an `Elem.el`, an array of `Elem.el` or a `__asHtml` object.
 * Elem.sel : `function(name, children)` : Create a representation of a simple HTML element
-* Elem.cel : `function(name, attributes)` : Create a representation of a void HTML element
+* Elem.vel : `function(name, attributes)` : Create a representation of a void HTML element
 * Elem.nbsp : `function(times)` : creates a `<span>` containing one or more `&nbsp;`
 * Elem.text : `function(value)` : creates a `<span>value</span>`
 * Elem.elements : `function(elem, ...)` : creates an array or `Elem.el` based on function args
