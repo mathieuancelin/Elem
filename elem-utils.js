@@ -90,7 +90,7 @@ var ElemUtils = ElemUtils || {};
         chain: function(obj) {
             var internalObj = obj;
             var under = this;
-            function chainMember() {
+            function chainableApi() {
                 return {
                     value: function() {
                         return internalObj;
@@ -109,7 +109,7 @@ var ElemUtils = ElemUtils || {};
                     }
                 };
             }
-            return chainMember();
+            return chainableApi();
         },
         contains: function(obj, target) {
             if (obj == null) return false;
@@ -121,9 +121,11 @@ var ElemUtils = ElemUtils || {};
             return prefix ? prefix + id : id;
         },  
         times: function(n, func) {
+            var results = [];
             for (var i = 0; i < n; i++) {
-                func(n)
+                results.push(func(n));
             }
+            return results;
         },
         clone: function(obj) {
             if (!this.isObject(obj)) return obj;
@@ -180,13 +182,15 @@ var ElemUtils = ElemUtils || {};
         dasherize: function(what) {
             return what.replace(/([A-Z\d]+)([A-Z][a-z])/g,'$1_$2')
                 .replace(/([a-z\d])([A-Z])/g,'$1_$2')
-                .toLowerCase()
-                .replace(/_/g, '-');
+                .toLowerCase().replace(/_/g, '-');
         },
         startsWith: function(source, start) { 
             return source.indexOf(start) === 0; 
         },
         focus: function(elem) { 
+            if (elem.focus) elem.focus();
+        },
+        hasFocus: function(elem) { 
             return elem === document.activeElement && (!document.hasFocus || document.hasFocus()) && !!(elem.type || elem.href || ~elem.tabIndex); 
         },
         on: function(node, types, callback) {
