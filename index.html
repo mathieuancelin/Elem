@@ -13,13 +13,12 @@
         <todo-list noShadow="true"></todo-list>
         <script src="./node_modules/jquery/dist/jquery.min.js" type="text/javascript"></script>
         <script src="./node_modules/underscore/underscore-min.js" type="text/javascript"></script>
-        <script src="./node_modules/backbone/backbone-min.js" type="text/javascript"></script>
+        <!--script src="./node_modules/backbone/backbone-min.js" type="text/javascript"></script-->
         <script src="./node_modules/sugar/release/sugar-full.development.js" type="text/javascript"></script>
         <script src="./elem.js" type="text/javascript"></script>
         <script src="./elem-webcomp.js" type="text/javascript"></script>
         <script type="text/javascript">
         $(function() {
-            
             var RenderOnlyTodoApp = Elem.el('div', { className: 'col-md-3' }, [
                 Elem.el('h3', 'Todo List'),
                 Elem.el('div',
@@ -253,7 +252,8 @@
             console.log(Elem.renderToString(TextBox()));
             console.log(Elem.renderToString(RenderOnlyTodoApp));
             console.log(Elem.renderToString(TodoApp(Elem.state(), {})));
-            console.log(TodoApp(Elem.state(), {}).toJsonString(true));
+            //console.log(TodoApp(Elem.state(), {}).toJsonString(true));
+            //console.log(TodoApp(Elem.state(), {}));
 
             function span(doc, value) {
                 var span = doc.createElement('span');

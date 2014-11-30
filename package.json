@@ -15,7 +15,8 @@
   },
   "scripts": {
     "build-elem": "uglifyjs elem.js > elem.min.js",
+    "build-utils": "uglifyjs elem-utils.js > elem-utils.min.js",
     "build-webcomp": "uglifyjs elem-webcomp.js > elem-webcomp.min.js",
-    "build": "npm run build-elem & npm run build-webcomp"
+    "build": "npm run build-elem & npm run build-webcomp & npm run build-utils"
   }
 }
