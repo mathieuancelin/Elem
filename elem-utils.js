@@ -23,7 +23,11 @@ var ElemUtils = ElemUtils || {};
     };
     var underscore = {
         keys: function(obj) {
-            return Object.keys(obj);
+            if (!_.isObject(obj)) return [];
+            if (Object.keys) return Object.keys(obj);
+            var keys = [];
+            for (var key in obj) if (_.has(obj, key)) keys.push(key);
+            return keys;
         },
         values: function(obj) {
             var keys = this.keys(obj);
