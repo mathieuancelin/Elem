@@ -143,7 +143,7 @@ function NewTask(state, props) {
           Elem.el('form', { role: 'form' }, [
               Elem.el('div', { className: ['form-group', 'col-md-10'] },
                   Elem.el('input', {
-                      dataKey: state.all().key'),
+                      dataKey: state.all().key,
                       onchange: storeName,
                       value: state.all().text,
                       placeholder: 'What do you have to do ?',
