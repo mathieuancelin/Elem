@@ -81,13 +81,13 @@ Of course you can. You just need to to something like
 var timer = Elem.component({
     container: '#timer',
     init: function(state, props) {
-        state.set('time', 0);
+        state.set({time: 0});
         setInterval(function() {
-            state.set('time', state.get('time') + 1);
+            state.set({time: state.all().time + 1});
         }, 1000);
     },
     render: function(state, props) {
-        return Elem.el('span', 'Elapsed : ' + state.get('time'));
+        return Elem.el('span', 'Elapsed : ' + state.all().time'));
     }
 });
 ```
@@ -104,33 +104,35 @@ when creating a component, you can define
 }
 ```
 
-you can pass an external Backbone model as state or use `Elem.state({...})`. Each time the state is changed, the render function will be called and the components will be re-rendered. You can avoid that by using `state.set('key', 'value', false)`.
+you can pass an external with `Elem.state({...})`. Each time the state is changed, the render function will be called and the components will be re-rendered. You can avoid that by using `state.set(obj, false)`.
 
 No let's write a more complicated component :
 
 ```javascript
 function NewTask(state, props) {
   function deleteAllDone() {
-      var tasks = _.filter(state.get('tasks'), function(item) {
+      var tasks = _.filter(state.all().tasks, function(item) {
           return item.done === false;
       });
-      state.set('tasks', tasks);
+      state.set({tasks: tasks});
   }
   function createNewTask() {
-      var tasks = state.get('tasks');
-      if (state.get('text') !== '') {
+      var tasks = state.all().tasks;
+      if (state.all().text !== '') {
           tasks.push({
               _id: _.uniqueId('task_'),
-              name: state.get('text'),
+              name: state.all().text,
               done: false
           });
-          state.set('text', '', false);
-          state.set('tasks', tasks);
+          state.set({
+            text: '',
+            tasks: tasks
+          });
       }
   }
   function storeName(e) {
       var text = e.target.value;
-      state.set('text', text, false);
+      state.set({text: text}, false); // silent set
       if (e.keyCode === 13) {
           createNewTask();
           e.preventDefault();
@@ -141,9 +143,9 @@ function NewTask(state, props) {
           Elem.el('form', { role: 'form' }, [
               Elem.el('div', { className: ['form-group', 'col-md-10'] },
                   Elem.el('input', {
-                      dataKey: state.get('key'),
+                      dataKey: state.all().key'),
                       onchange: storeName,
-                      value: state.get('text'),
+                      value: state.all().text,
                       placeholder: 'What do you have to do ?',
                       type: 'text', className: 'form-control',
                   }, [])
@@ -175,7 +177,7 @@ function NewTask(state, props) {
 
 function TaskItem(state, props) {
   function flipTaskState() {
-      var tasks = _.map(state.get('tasks'), function(item) {
+      var tasks = _.map(state.all().tasks, function(item) {
           if (props.task._id === item._id) {
               var newTask = _.clone(item);
               newTask.done = !props.task.done;
@@ -183,7 +185,7 @@ function TaskItem(state, props) {
           }
           return item;
       });
-      state.set('tasks', tasks);
+      state.set({tasks: tasks});
   }
   return Elem.el('li', { className: 'list-group-item' },
       Elem.el('div', { className: 'row' }, [
@@ -205,12 +207,12 @@ function TaskItem(state, props) {
   );
 }
 
-function TodoApp(state, props) {
+function TodoApp(state, props, component) {
   return Elem.el('div', { className: 'col-md-4' }, [
       Elem.el('h3', 'Todo List'),
-      NewTask(state, props),
-      Elem.el('ul', { className: 'list-group' }, _.map(state.get('tasks'), function(task) {
-          return TaskItem(state, { task: task});
+      NewTask(state, props, component),
+      Elem.el('ul', { className: 'list-group' }, _.map(state.all().tasks, function(task) {
+          return TaskItem(state, { task: task}, component);
       }))
   ]);
 }
@@ -218,8 +220,10 @@ function TodoApp(state, props) {
 Elem.component({
   container: '#container',
   init: function(state, props) {
-      state.set('tasks', []);
-      state.set('text', '');
+      state.set({
+        tasks: [],
+        text: ''
+      });
   },
   render: TodoApp
 });
@@ -233,9 +237,11 @@ You can use an Elem component to create webcomponent. To do that, just import el
 ```javascript
 Elem.registerWebComponent('todo-list', {
     init: function(state, props) {
-        state.set('key', _.uniqueId('todolist-'));
-        state.set('tasks', []);
-        state.set('text', '');
+      state.set({
+        key: _.uniqueId('todolist-'),
+        tasks: [],
+        text: ''
+      });
     },
     render: TodoApp
 });

@@ -237,9 +237,10 @@ var Elem = Elem || {};
         return _.map(renderToNode(el, stringifyDoc()), function(n) { return n.toHtmlString(); }).join('');
     };
     exports.elements = function() { return _.map(arguments, function(item) { return item; }); };
-    exports.render = function(el, node, props) {
-        var waitingHandlers = (props || {}).__waitingHandlers || [];
-        var refs = (props || {}).__refs || {};
+    exports.render = function(el, node, context) {
+        var waitingHandlers = (context || {}).waitingHandlers || [];
+        var refs = (context || {}).refs || {};
+        var props = (context || {}).props || {};
         var doc = document;
         if (node.ownerDocument) {
             doc = node.ownerDocument;
@@ -252,7 +253,7 @@ var Elem = Elem || {};
         _.each(htmlNode, function(n) {
             node.appendChild(n);
         });
-        if (!(props && props.__rootListener)) {  // external listener here
+        if (!(context && context.__rootListener)) {  // external listener here
             _.each(waitingHandlers, function(handler) { // handler on each concerned node
                 _.on('[data-nodeid="' + handler.id + '"]', handler.event.replace('on', ''), function() {
                     handler.callback.apply({}, arguments);
@@ -267,6 +268,8 @@ var Elem = Elem || {};
         var render = opts.render;
         var eventCallbacks = {};
         var oldHandlers = [];
+        var afterRender = opts.afterRender || function() {};
+        var getDOMNode = function() { return _.findNode(el); };
         if (opts.init) { opts.init(state, _.clone(props)); }
         _.on(el, events + ' ' + mouseEvents, function(e) { // bubbles listener, TODO : handle mouse event in a clever way
             var node = e.target;
@@ -292,7 +295,8 @@ var Elem = Elem || {};
             var key = focus.dataset.key; //$(focus).data('key');
             var waitingHandlers = [];
             var refs = {};
-            Elem.render(render(state, _.clone(props), refs), el, { __waitingHandlers: waitingHandlers, __rootListener: true, __refs: refs });
+            Elem.render(render(state, _.clone(props), { refs: refs, getDOMNode: getDOMNode }), el, { waitingHandlers: waitingHandlers, __rootListener: true, refs: refs });
+            afterRender(state, _.clone(props), { refs: refs, getDOMNode: getDOMNode });
             if (key) {
                 var focusNode = document.querySelector('[data-key="' + key + '"]');//$('[data-key="' + key + '"]');
                 _.focus(focusNode); // focusNode.focus(); 
@@ -309,53 +313,38 @@ var Elem = Elem || {};
             });
         }
         rerender();
-        if (state.atLast) {
-            state.atLast(rerender);
-        } else {
-            state.on('all', rerender); // Do we really need to handle BackBone models
-        }
+        state.onChange(rerender);
         return state;
     };
     exports.state = function(mod) {
         var theModel = _.extend({}, mod || {});
         var callbacks = [];
-        var lastCallbacks = [];
-        function fireCallbacks(key, value) { 
-            _.each(callbacks, function(callback) { callback(key, value); }); 
-            _.each(lastCallbacks, function(callback) { callback(key, value); }); 
+        function fireCallbacks() {
+            _.each(callbacks, function(callback) { callback(); });
         }
         return {
-            stateId: _.uniqueId('state-'), 
-            on: function(what, callback) { callbacks.push(callback); },
             onChange: function(callback) { callbacks.push(callback); },
-            atLast: function(callback) { lastCallbacks.push(callback); },
-            silentSet: function(key, value) { this.set(key, value, false); },
-            set: function(key, value, propagate) {
-                if (_.isUndefined(value) && _.isUndefined(propagate) && _.isObject(key)) {
-                    _.map(_.keys(key), function(k) {
-                        theModel[k] = key[k];
-                        fireCallbacks(k, key[k]);   
+            get: function(key) { return theModel[key]; },
+            all: function() { return _.clone(theModel); },
+            forceUpdate: function() { fireCallbacks(); },
+            set: function(obj, silentOrCallback) {
+                var silent = _.isBoolean(silentOrCallback) && silentOrCallback === true;
+                if (!_.isUndefined(obj) && _.isObject(obj)) {
+                    _.map(_.keys(obj), function(k) {
+                        theModel[k] = obj[k];
                     });
-                } else if (_.isUndefined(propagate) && _.isObject(key)) {
-                    _.map(_.keys(key), function(k) {
-                        theModel[k] = key[k];
-                        if (value !== false) fireCallbacks(k, key[k]);   
-                    });
-                } else if (_.isUndefined(propagate) && !_.isObject(key)) {
-                    theModel[key] = value;
-                    if (value !== false) fireCallbacks(key, value);
-                } else {
-                    theModel[key] = value;
-                    if (propagate !== false) fireCallbacks(key, value);
+                    if (!silent) fireCallbacks();
+                    if (!silent) (silentOrCallback || function() {})();
                 }
             },
-            get: function(key) { return theModel[key]; },
-            refresh: function() { fireCallbacks('__refresh', {}); },
+            replace: function(obj, silentOrCallback) {
+                theModel = {};
+                this.set(obj, silentOrCallback);
+            },
             remove: function(key) {
                 delete theModel[key];
-                fireCallbacks(key, 'deleted');
-            },
-            toJson: function() { return _.clone(theModel); }
+                fireCallbacks();
+            }
         };
     };
 })(Elem);

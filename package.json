@@ -14,9 +14,10 @@
     "uglify-js": "~2.4.15"
   },
   "scripts": {
+    "build-simple": "uglifyjs elem-simple.js > elem-simple.min.js",
     "build-elem": "uglifyjs elem.js > elem.min.js",
     "build-utils": "uglifyjs elem-utils.js > elem-utils.min.js",
     "build-webcomp": "uglifyjs elem-webcomp.js > elem-webcomp.min.js",
-    "build": "npm run build-elem & npm run build-webcomp & npm run build-utils"
+    "build": "npm run build-simple &npm run build-elem & npm run build-webcomp & npm run build-utils"
   }
 }

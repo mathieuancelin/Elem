@@ -65,30 +65,30 @@
                 ])
             ]);
         
-            function NewTask(state, props, refs) {
+            function NewTask(state, props, comp) {
                 function deleteAllDone() {
-                    var tasks = _.filter(state.get('tasks'), function(item) {
+                    var tasks = _.filter(state.all().tasks, function(item) {
                         return item.done === false;
                     });
-                    state.set('tasks', tasks);
+                    state.set({ tasks: tasks });
                 }
                 function createNewTask() {
-                    console.log(refs.taskInput.getDOMNode().val());
-
-                    var tasks = state.get('tasks');
-                    if (state.get('text') !== '') {
+                    var tasks = state.all().tasks;
+                    if (state.all().text !== '') {
                         tasks.push({
                             _id: _.uniqueId('task_'),
                             name: state.get('text'),
                             done: false
                         });
-                        state.silentSet('text', '');
-                        state.set('tasks', tasks);
+                        state.set({
+                            tasks: tasks,
+                            text: ''
+                        });
                     }
                 }
                 function storeName(e) {
                     var text = e.target.value;
-                    state.silentSet('text', text);
+                    state.set({ text: text }, true);
                     if (e.keyCode === 13) {
                         createNewTask();
                         e.preventDefault();
@@ -100,11 +100,11 @@
                             Elem.el('div', { className: ['form-group', 'col-md-10'] },
                                 Elem.el('input', {
                                     ref: 'taskInput',
-                                    dataKey: state.get('key'),
+                                    dataKey: state.all().key,
                                     onchange: storeName,
                                     onkeyup: storeName,
                                     onkeydown: storeName,
-                                    value: state.get('text'),
+                                    value: state.all().text,
                                     placeholder: 'What do you have to do ?',
                                     type: 'text', className: 'form-control',
                                 }, [])
@@ -134,9 +134,9 @@
                 );    
             }
 
-            function TaskItem(state, props, refs) {
+            function TaskItem(state, props, comp) {
                 function flipTaskState() {
-                    var tasks = _.map(state.get('tasks'), function(item) {
+                    var tasks = _.map(state.all().tasks, function(item) {
                         if (props.task._id === item._id) {
                             var newTask = _.clone(item);
                             newTask.done = !props.task.done;
@@ -144,7 +144,7 @@
                         }
                         return item;
                     });
-                    state.set('tasks', tasks);
+                    state.set({tasks: tasks});
                 }
                 return Elem.el('li', { className: 'list-group-item' },
                     Elem.el('div', { className: 'row' }, [
@@ -166,12 +166,12 @@
                 );
             }
 
-            function TodoApp(state, props, refs) {
+            function TodoApp(state, props, comp) {
                 return Elem.el('div', { className: 'col-md-4' }, [
                     Elem.el('h3', 'Todo List'),
-                    NewTask(state, props, refs),
-                    Elem.el('ul', { className: 'list-group' }, _.map(state.get('tasks'), function(task) {
-                        return TaskItem(state, { task: task}, refs);
+                    NewTask(state, props, comp),
+                    Elem.el('ul', { className: 'list-group' }, _.map(state.all().tasks, function(task) {
+                        return TaskItem(state, { task: task }, comp);
                     }))
                 ]);
             }
@@ -179,17 +179,21 @@
             Elem.component({
                 container: '#demo1',
                 init: function(state, props) {
-                    state.set('tasks', []);
-                    state.set('text', '');
+                    state.set({
+                        tasks: [],
+                        text: ''
+                    });
                 },
                 render: TodoApp
             });
 
             Elem.registerWebComponent('todo-list', {
                 init: function(state, props) {
-                    state.set('key', _.uniqueId('todolist-'));
-                    state.set('tasks', []);
-                    state.set('text', '');
+                    state.set({
+                        key: _.uniqueId('todolist-'),
+                        tasks: [],
+                        text: ''
+                    });
                 },
                 render: TodoApp
             });
@@ -198,7 +202,7 @@
 
             function TextBox() {
                 function updateModel(e) {
-                    commonState.set('name', e.target.value);
+                    commonState.set({name: e.target.value});
                 }
                 return Elem.el('div', { className: 'col-md-4' }, [
                     Elem.el('h3', 'Type your name here'),
@@ -208,7 +212,7 @@
                                 placeholder: 'Type your name',
                                 type: 'text', 
                                 className: 'form-control', 
-                                value: commonState.get('name'),
+                                value: commonState.all().name,
                                 onkeydown: updateModel,
                                 onkeyup: updateModel,
                                 onkeypress: updateModel,
@@ -242,9 +246,9 @@
             Elem.component({
                 container: '#timer',
                 init: function(state, props) {
-                    state.set('time', 0);
+                    state.set({time: 0});
                     setInterval(function() {
-                        state.set('time', state.get('time') + 1);
+                        state.set({time: state.all().time + 1});
                     }, 1000);
                 },
                 render: function(state, props) {
@@ -257,14 +261,6 @@
             console.log(Elem.renderToString(TodoApp(Elem.state(), {})));
             //console.log(TodoApp(Elem.state(), {}).toJsonString(true));
             //console.log(TodoApp(Elem.state(), {}));
-
-            function span(doc, value) {
-                var span = doc.createElement('span');
-                span.setAttribute('data-nodeid', _.escape(_.uniqueId('node_')));
-                var text = doc.createTextNode(value);
-                span.appendChild(text);
-                return span; 
-            }
         });
         </script>
     </body>

@@ -1,7 +1,3 @@
-// Stupid simple library to avoid string concat when building html Uis
-// just build HTML elements Elem.el(name, attributes, children) where children can be String, number, boolean and array
-// and render the tree with Elem.render(theElement, theContainer);
-// just remember : className => class and attributes key are camel case sensitive, dropdownMenu => dropdown-menu
 var Elem = Elem || {};
 (function(exports) {
     var voidElements = ["AREA","BASE","BR","COL","COMMAND","EMBED","HR","IMG","INPUT","KEYGEN","LINK","META","PARAM","SOURCE","TRACK","WBR"];
@@ -223,13 +219,14 @@ var Elem = Elem || {};
         var render = opts.render;
         var props = opts.props || {};
         var refs = {};
+        var getDOMNode = function() { return $(el); };
         if (opts.init) {
             opts.init(model, props);
         }
-        Elem.render(render(model, props, refs), el, refs);
+        Elem.render(render(model, props, { refs: refs, getDOMNode: getDOMNode }), el, refs);
         model.onChange(function() {
             refs = {};
-            Elem.render(render(model, props, refs), el, refs);
+            Elem.render(render(model, props, { refs: refs, getDOMNode: getDOMNode }), el, refs);
         });
         return model;
     };
