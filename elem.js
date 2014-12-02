@@ -8,6 +8,7 @@ var Elem = Elem || {};
     if (!_.startsWith) _.startsWith = function(source, what) { return source.startsWith(what); };
     if (!_.focus) _.focus = function(elem) { return $(elem).focus(); };
     if (!_.on) _.on = function(node, types, callback) { $(node).on(types, callback); };
+    if (!_.findNode) _.findNode = function(selector) { return $(selector); };
     var debug = false;
     var voidElements = ["AREA","BASE","BR","COL","COMMAND","EMBED","HR","IMG","INPUT","KEYGEN","LINK","META","PARAM","SOURCE","TRACK","WBR"];
     var mouseEvents = 'MouseDown MouseEnter MouseLeave MouseMove MouseOut MouseOver MouseUp'.toLowerCase();
@@ -83,6 +84,14 @@ var Elem = Elem || {};
         };
     }
 
+    function buildRef(id) {
+        return {
+            getDOMNode: function() {
+                return _.findNode('[data-nodeid="' + id + '"]');
+            }
+        };
+    }
+
     function extractEventHandlers(attrs, nodeId, context) {
         _.each(_.keys(attrs), function(key) {
             var keyName = _.dasherize(key);  
@@ -96,6 +105,7 @@ var Elem = Elem || {};
                     });
                 }
             } 
+            if (keyName === 'ref' && context && context.refs) context.refs[attrs[key]] = buildRef(nodeId);
         });   
     }
 
@@ -109,7 +119,7 @@ var Elem = Elem || {};
             if (key === 'className') {
                 keyName = 'class';
             }
-            if (!_.startsWith(keyName, 'on')) {
+            if (!_.startsWith(keyName, 'on') && keyName !== 'ref') {
                 var value = attrs[key];
                 if (!_.isUndefined(value) && _.isFunction(value)) {
                     value = value();
@@ -229,11 +239,12 @@ var Elem = Elem || {};
     exports.elements = function() { return _.map(arguments, function(item) { return item; }); };
     exports.render = function(el, node, props) {
         var waitingHandlers = (props || {}).__waitingHandlers || [];
+        var refs = (props || {}).__refs || {};
         var doc = document;
         if (node.ownerDocument) {
             doc = node.ownerDocument;
         }
-        var htmlNode = renderToNode(el, doc, { root: node, waitingHandlers: waitingHandlers, props: props });
+        var htmlNode = renderToNode(el, doc, { root: node, waitingHandlers: waitingHandlers, refs: refs, props: props });
         if (_.isString(node)) {
             node = doc.querySelector(node);
         }
@@ -280,7 +291,8 @@ var Elem = Elem || {};
             var focus = document.activeElement; // TODO : check if input/select/textarea, remember cursor position here
             var key = focus.dataset.key; //$(focus).data('key');
             var waitingHandlers = [];
-            Elem.render(render(state, _.clone(props)), el, { __waitingHandlers: waitingHandlers, __rootListener: true });
+            var refs = {};
+            Elem.render(render(state, _.clone(props), refs), el, { __waitingHandlers: waitingHandlers, __rootListener: true, __refs: refs });
             if (key) {
                 var focusNode = document.querySelector('[data-key="' + key + '"]');//$('[data-key="' + key + '"]');
                 _.focus(focusNode); // focusNode.focus(); 

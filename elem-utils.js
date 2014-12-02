@@ -205,6 +205,9 @@ var ElemUtils = ElemUtils || {};
                     }
                 });
             }
+        },
+        findNode: function(selector) {
+            return document.querySelector(node);
         }
     };
     underscore.escape = createEscaper(escapeMap, underscore.keys);

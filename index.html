@@ -65,7 +65,7 @@
                 ])
             ]);
         
-            function NewTask(state, props) {
+            function NewTask(state, props, refs) {
                 function deleteAllDone() {
                     var tasks = _.filter(state.get('tasks'), function(item) {
                         return item.done === false;
@@ -73,6 +73,8 @@
                     state.set('tasks', tasks);
                 }
                 function createNewTask() {
+                    console.log(refs.taskInput.getDOMNode().val());
+
                     var tasks = state.get('tasks');
                     if (state.get('text') !== '') {
                         tasks.push({
@@ -97,6 +99,7 @@
                         Elem.el('form', { role: 'form' }, [
                             Elem.el('div', { className: ['form-group', 'col-md-10'] },
                                 Elem.el('input', {
+                                    ref: 'taskInput',
                                     dataKey: state.get('key'),
                                     onchange: storeName,
                                     onkeyup: storeName,
@@ -131,7 +134,7 @@
                 );    
             }
 
-            function TaskItem(state, props) {
+            function TaskItem(state, props, refs) {
                 function flipTaskState() {
                     var tasks = _.map(state.get('tasks'), function(item) {
                         if (props.task._id === item._id) {
@@ -163,12 +166,12 @@
                 );
             }
 
-            function TodoApp(state, props) {
+            function TodoApp(state, props, refs) {
                 return Elem.el('div', { className: 'col-md-4' }, [
                     Elem.el('h3', 'Todo List'),
-                    NewTask(state, props),
+                    NewTask(state, props, refs),
                     Elem.el('ul', { className: 'list-group' }, _.map(state.get('tasks'), function(task) {
-                        return TaskItem(state, { task: task});
+                        return TaskItem(state, { task: task}, refs);
                     }))
                 ]);
             }
