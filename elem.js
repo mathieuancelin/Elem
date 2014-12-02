@@ -322,7 +322,8 @@ var Elem = Elem || {};
         function fireCallbacks() {
             _.each(callbacks, function(callback) { callback(); });
         }
-        return {
+        var api = function() { return _.clone(theModel); };
+        return _.extend(api, {
             onChange: function(callback) { callbacks.push(callback); },
             get: function(key) { return theModel[key]; },
             all: function() { return _.clone(theModel); },
@@ -345,6 +346,6 @@ var Elem = Elem || {};
                 delete theModel[key];
                 fireCallbacks();
             }
-        };
+        });
     };
 })(Elem);

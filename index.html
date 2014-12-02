@@ -67,14 +67,14 @@
         
             function NewTask(state, props, comp) {
                 function deleteAllDone() {
-                    var tasks = _.filter(state.all().tasks, function(item) {
+                    var tasks = _.filter(state().tasks, function(item) {
                         return item.done === false;
                     });
                     state.set({ tasks: tasks });
                 }
                 function createNewTask() {
-                    var tasks = state.all().tasks;
-                    if (state.all().text !== '') {
+                    var tasks = state().tasks;
+                    if (state().text !== '') {
                         tasks.push({
                             _id: _.uniqueId('task_'),
                             name: state.get('text'),
@@ -100,11 +100,11 @@
                             Elem.el('div', { className: ['form-group', 'col-md-10'] },
                                 Elem.el('input', {
                                     ref: 'taskInput',
-                                    dataKey: state.all().key,
+                                    dataKey: state().key,
                                     onchange: storeName,
                                     onkeyup: storeName,
                                     onkeydown: storeName,
-                                    value: state.all().text,
+                                    value: state().text,
                                     placeholder: 'What do you have to do ?',
                                     type: 'text', className: 'form-control',
                                 }, [])
@@ -136,7 +136,7 @@
 
             function TaskItem(state, props, comp) {
                 function flipTaskState() {
-                    var tasks = _.map(state.all().tasks, function(item) {
+                    var tasks = _.map(state().tasks, function(item) {
                         if (props.task._id === item._id) {
                             var newTask = _.clone(item);
                             newTask.done = !props.task.done;
@@ -170,7 +170,7 @@
                 return Elem.el('div', { className: 'col-md-4' }, [
                     Elem.el('h3', 'Todo List'),
                     NewTask(state, props, comp),
-                    Elem.el('ul', { className: 'list-group' }, _.map(state.all().tasks, function(task) {
+                    Elem.el('ul', { className: 'list-group' }, _.map(state().tasks, function(task) {
                         return TaskItem(state, { task: task }, comp);
                     }))
                 ]);
@@ -212,7 +212,7 @@
                                 placeholder: 'Type your name',
                                 type: 'text', 
                                 className: 'form-control', 
-                                value: commonState.all().name,
+                                value: commonState().name,
                                 onkeydown: updateModel,
                                 onkeyup: updateModel,
                                 onkeypress: updateModel,
@@ -248,7 +248,7 @@
                 init: function(state, props) {
                     state.set({time: 0});
                     setInterval(function() {
-                        state.set({time: state.all().time + 1});
+                        state.set({time: state().time + 1});
                     }, 1000);
                 },
                 render: function(state, props) {
