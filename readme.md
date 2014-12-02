@@ -104,7 +104,7 @@ when creating a component, you can define
 }
 ```
 
-you can pass an external with `Elem.state({...})`. Each time the state is changed, the render function will be called and the components will be re-rendered. You can avoid that by using `state.set(obj, false)`.
+you can pass an external with `Elem.state({...})`. Each time the state is changed, the render function will be called and the components will be re-rendered. You can avoid that by using `state.set(obj, true)`.
 
 No let's write a more complicated component :
 
@@ -132,7 +132,7 @@ function NewTask(state, props) {
   }
   function storeName(e) {
       var text = e.target.value;
-      state.set({text: text}, false); // silent set
+      state.set({text: text}, true); // silent set
       if (e.keyCode === 13) {
           createNewTask();
           e.preventDefault();
