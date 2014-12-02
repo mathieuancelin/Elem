@@ -18,6 +18,17 @@ API
 * `Elem.state: function(defaultValues)` : create a state object. Similar to Backbone models
 * `Elem.registerWebComponent: `function(elemName, options)` : register a component as a webcomponent. See the webcomponent section for options.
 
+Dependencies
+-------------
+
+Elem needs the following dependencies to work :
+
+* JQuery
+* Underscore
+* Sugar
+
+If you don't want to use those libraries, you can import `elem-utils.min.js` that will emulate all the function needed by Elem instead of using the dependencies. However, `elem-utils` has not been extensively on various browser and provide best effort compatibility.
+
 How can I use Elem.js ?
 ----------------------------
 
