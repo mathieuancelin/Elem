@@ -23,14 +23,14 @@ var ElemUtils = ElemUtils || {};
     };
     var underscore = {
         keys: function(obj) {
-            if (!_.isObject(obj)) return [];
+            if (!underscore.isObject(obj)) return [];
             if (Object.keys) return Object.keys(obj);
             var keys = [];
-            for (var key in obj) if (_.has(obj, key)) keys.push(key);
+            for (var key in obj) if (underscore.has(obj, key)) keys.push(key);
             return keys;
         },
         values: function(obj) {
-            var keys = this.keys(obj);
+            var keys = underscore.keys(obj);
             var length = keys.length;
             var values = Array(length);
             for (var i = 0; i < length; i++) {
@@ -45,7 +45,7 @@ var ElemUtils = ElemUtils || {};
                 if (typeof isSorted == 'number') {
                     i = isSorted < 0 ? Math.max(0, length + isSorted) : isSorted;
                 } else {
-                    i = this.sortedIndex(array, item);
+                    i = underscore.sortedIndex(array, item);
                     return array[i] === item ? i : -1;
                 }
             }
@@ -60,7 +60,7 @@ var ElemUtils = ElemUtils || {};
                     func(obj[i], i, obj);
                 }
             } else {
-                var keys = this.keys(obj);
+                var keys = underscore.keys(obj);
                 for (i = 0, length = keys.length; i < length; i++) {
                     func(obj[keys[i]], keys[i], obj);
                 }
@@ -69,7 +69,7 @@ var ElemUtils = ElemUtils || {};
         },
         map: function(obj, func) {
             if (obj == null) return [];
-            var keys = obj.length !== +obj.length && this.keys(obj),
+            var keys = obj.length !== +obj.length && underscore.keys(obj),
                 length = (keys || obj).length,
                 results = Array(length),
                 currentKey;
@@ -82,7 +82,7 @@ var ElemUtils = ElemUtils || {};
         filter: function(obj, predicate) {
             var results = [];
             if (obj == null) return results;
-            this.each(obj, function(value, index, list) {
+            underscore.each(obj, function(value, index, list) {
                 if (predicate(value, index, list)) results.push(value);
             });
             return results;
@@ -113,8 +113,8 @@ var ElemUtils = ElemUtils || {};
         },
         contains: function(obj, target) {
             if (obj == null) return false;
-            if (obj.length !== +obj.length) obj = this.values(obj);
-            return this.indexOf(obj, target) >= 0;
+            if (obj.length !== +obj.length) obj = underscore.values(obj);
+            return underscore.indexOf(obj, target) >= 0;
         },
         uniqueId: function(prefix) {
             var id = ++__idCounter + '';
@@ -128,11 +128,11 @@ var ElemUtils = ElemUtils || {};
             return results;
         },
         clone: function(obj) {
-            if (!this.isObject(obj)) return obj;
-            return this.isArray(obj) ? obj.slice() : this.extend({}, obj);
+            if (!underscore.isObject(obj)) return obj;
+            return underscore.isArray(obj) ? obj.slice() : underscore.extend({}, obj);
         },
         extend: function(obj) {
-            if (!this.isObject(obj)) return obj;
+            if (!underscore.isObject(obj)) return obj;
             var source, prop;
             for (var i = 1, length = arguments.length; i < length; i++) {
                 source = arguments[i];
@@ -174,7 +174,7 @@ var ElemUtils = ElemUtils || {};
             return obj === null;
         },
         isNaN: function(obj) {
-            return this.isNumber(obj) && obj !== +obj;
+            return underscore.isNumber(obj) && obj !== +obj;
         },
         has: function(obj, key) {
             return obj != null && Object.prototype.hasOwnProperty.call(obj, key);
@@ -197,8 +197,8 @@ var ElemUtils = ElemUtils || {};
             if ($) {
                 $(node).on(types, callback);
             } else {
-                this.each(types.split(' '), function(type) {
-                    if (this.isString(node)) {
+                underscore.each(types.split(' '), function(type) {
+                    if (underscore.isString(node)) {
                         document.querySelector(node).addEventListener(type, callback);
                     } else {
                         node.addEventListener(type, callback);

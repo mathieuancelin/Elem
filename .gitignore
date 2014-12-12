@@ -4,3 +4,4 @@ node_modules
 *.ipr
 *.iws
 .module-cache
+/modularized
