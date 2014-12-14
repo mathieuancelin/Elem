@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
+    "backbone": "~1.1.2",
+    "jquery": "~2.1.1",
+    "underscore": "~1.7.0",
+    "sugar": "~1.4.1"
   },
   "devDependencies": {
     "watchify": "2.1.1",
@@ -10,7 +14,6 @@
     "uglify-js": "~2.4.15"
   },
   "scripts": {
-    "build": "browserify --standalone Elem src/elem.js | uglifyjs -mc > dist/Elem.min.js",
-    "watch": "watchify --standalone Elem src/elem.js -o dist/Elem.min.js --debug --verbose"
+    "build": "uglifyjs Elem.js > Elem.min.js"
   }
 }
