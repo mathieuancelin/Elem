@@ -93,6 +93,72 @@ function filter(obj, predicate) {
     return results;
 }
 
+function reduce(obj, iteratee, memo, context) {
+    if (obj == null) obj = [];
+    var keys = obj.length !== +obj.length && keys(obj),
+        length = (keys || obj).length,
+        index = 0,
+        currentKey;
+    if (arguments.length < 3) {
+        if (!length) throw new TypeError(reduceError);
+        memo = obj[keys ? keys[index++] : index++];
+    }
+    for (; index < length; index++) {
+        currentKey = keys ? keys[index] : index;
+        memo = iteratee(memo, obj[currentKey], currentKey, obj);
+    }
+    return memo;
+}
+
+function reject(obj, predicate, context) {
+    return filter(obj, negate(predicate), context);
+}
+
+function where(obj, attrs) {
+    return filter(obj, matches(attrs));
+}
+
+function matches(attrs) {
+    var pairs = pairs(attrs),
+        length = pairs.length;
+    return function(obj) {
+        if (obj == null) return !length;
+        obj = new Object(obj);
+        for (var i = 0; i < length; i++) {
+            var pair = pairs[i],
+                key = pair[0];
+            if (pair[1] !== obj[key] || !(key in obj)) return false;
+        }
+        return true;
+    };
+}
+
+function identity(value) {
+    return value;
+}
+
+function property(key) {
+    return function(obj) {
+        return obj[key];
+    };
+}
+
+function negate(predicate) {
+    return function() {
+        return !predicate.apply(this, arguments);
+    };
+}
+
+function pairs(obj) {
+    var keys = keys(obj);
+    var length = keys.length;
+    var pairs = Array(length);
+    for (var i = 0; i < length; i++) {
+        pairs[i] = [keys[i], obj[keys[i]]];
+    }
+    return pairs;
+}
+
 function chain(obj) {
     var internalObj = obj;
     var under = this;
@@ -111,6 +177,23 @@ function chain(obj) {
             },
             each: function(func) {
                 under.each(internalObj, func);
+                return this;
+            },
+            values: function() {
+                return under.values();
+            },
+            keys: function() {
+                return under.keys();
+            },
+            reduce: function(iteratee, memo, context) {
+                return under.reduce(internalObj, iteratee, memo, context);
+            },
+            reject: function(predicate, context) {
+                internalObj = under.reject(internalObj, predicate, context);
+                return this;
+            },
+            where: function(attrs) {
+                internalObj = under.where(internalObj, attrs);
                 return this;
             }
         };
@@ -235,32 +318,40 @@ function findNode(selector) {
 }
 
 exports.escape = createEscaper(escapeMap, keys);
-exports.keys = keys
-exports.values = values
-exports.indexOf = indexOf
-exports.each = each
-exports.map = map
-exports.filter = filter
-exports.chain = chain
-exports.contains = contains
-exports.uniqueId = uniqueId
-exports.times = times
-exports.clone = clone
-exports.extend = extend
-exports.isUndefined = isUndefined
-exports.isArray = isArray
-exports.isObject = isObject
-exports.isNumber = isNumber
-exports.isString = isString
-exports.isBoolean = isBoolean
-exports.isRegExp = isRegExp
-exports.isFunction = isFunction
-exports.isNull = isNull
-exports.isNaN = isNaN
-exports.has = has
-exports.dasherize = dasherize
-exports.startsWith = startsWith
-exports.functionfocus = functionfocus
-exports.hasFocus = hasFocus
-exports.on = on
-exports.findNode = findNode
+exports.keys = keys;
+exports.values = values;
+exports.indexOf = indexOf;
+exports.each = each;
+exports.map = map;
+exports.filter = filter;
+exports.chain = chain;
+exports.contains = contains;
+exports.uniqueId = uniqueId;
+exports.times = times;
+exports.clone = clone;
+exports.extend = extend;
+exports.isUndefined = isUndefined;
+exports.isArray = isArray;
+exports.isObject = isObject;
+exports.isNumber = isNumber;
+exports.isString = isString;
+exports.isBoolean = isBoolean;
+exports.isRegExp = isRegExp;
+exports.isFunction = isFunction;
+exports.isNull = isNull;
+exports.isNaN = isNaN;
+exports.has = has;
+exports.dasherize = dasherize;
+exports.startsWith = startsWith;
+exports.functionfocus = functionfocus;
+exports.hasFocus = hasFocus;
+exports.on = on;
+exports.findNode = findNode;
+exports.reduce = reduce;
+exports.reject = reject;
+exports.where = where;
+exports.matches = matches;
+exports.negate = negate;
+exports.property = property;
+exports.identity = identity;
+exports.pairs = pairs;
