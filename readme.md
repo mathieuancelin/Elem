@@ -17,17 +17,12 @@ API
 * `Elem.component: function(options)` : render a component and return its state. See the component section for options
 * `Elem.state: function(defaultValues)` : create a state object. Similar to Backbone models
 * `Elem.registerWebComponent: `function(elemName, options)` : register a component as a webcomponent. See the webcomponent section for options.
+* `Elem.Utils` : a lot of utils function to deal with JavaScript structures. Similar to some underscore.js functions
 
 Dependencies
 -------------
 
-Elem needs the following dependencies to work :
-
-* JQuery
-* Underscore
-* Sugar
-
-If you don't want to use those libraries, you can import `elem-utils.min.js` that will emulate all the function needed by Elem instead of using the dependencies. However, `elem-utils` has not been extensively on various browser and provide best effort compatibility.
+Elem can be used as a standalone library and that's awesome.
 
 How can I use Elem.js ?
 ----------------------------
@@ -243,7 +238,7 @@ Elem.component({
 What about webcomponents ?
 ----------------------------
 
-You can use an Elem component to create webcomponent. To do that, just import elem-webcomp.min.js and write somthing like 
+You can use an Elem component to create webcomponent. To do that, just write somthing like 
 
 ```javascript
 Elem.registerWebComponent('todo-list', {
