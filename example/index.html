@@ -2,6 +2,38 @@
 <html>
     <head>
         <title>Demos</title>
+        <style>
+            .circle {
+                border-radius: 50%;
+                width: 120px;
+                height: 120px;
+                margin-left: 10px;
+                margin-top: 10px;
+                background: white;
+                border: 3px solid #61b2a7;
+                position: relative;
+            }
+            .circle .centered {
+                position:absolute;
+                top:55%;
+                left:0px;
+                width: 120px;
+                text-align: center;
+            }
+            .circle .second {
+                width:0;
+                height:0;
+                position:absolute;
+                top:50%;
+                left:50%;
+                margin:-40% -1px 0 0;
+                padding:40% 1px 0;
+                background:#61b2a7;
+                -webkit-transform-origin:50% 100%;
+                -ms-transform-origin:50% 100%;
+                transform-origin:50% 100%;
+            }
+        </style>
     </head>
     <body>
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">

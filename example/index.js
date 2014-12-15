@@ -234,12 +234,15 @@ Elem.component({
         }, 1000);
     },
     render: function(state, props) {
-        return Elem.el('span', 'Elapsed : ' + state.get('time'));
+        var value = (state.get('time') % 60);
+        return Elem.el('div', { className: 'circle'}, [
+                Elem.el('div', { className: 'second', style: { transform: 'rotate(' + (value * 6) + 'deg);' }}, ''),
+                Elem.el('span', { className: 'centered' }, state.get('time') + ' sec.' )
+            ]
+        );
     }
 });
 
 console.log(Elem.renderToString(TextBox()));
 console.log(Elem.renderToString(RenderOnlyTodoApp));
 console.log(Elem.renderToString(TodoApp(Elem.state(), {})));
-//console.log(TodoApp(Elem.state(), {}).toJsonString(true));
-//console.log(TodoApp(Elem.state(), {}));
