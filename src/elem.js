@@ -3,6 +3,7 @@ var _ = require('./utils');
 var component = require('./component');
 var state = require('./state');
 var registerWebComponent = require('./webcomponent').registerWebComponent;
+var Stringifier = require('./stringify');
 
 function styleToString(attrs) {
     if (_.isUndefined(attrs)) return '';
@@ -46,32 +47,6 @@ function wrapChildren(children) {
         return [];
     }
     return children || [];
-}
-
-function stringifyDoc() {
-    function node(name) { 
-        var attrs = [];
-        var children = [];
-        return {
-            setAttribute: function(key, value) { attrs.push(key + '="' + value + '"'); },
-            appendChild: function(child) { children.push(child); },
-            toHtmlString: function() {
-                var selfCloseTag = _.contains(Common.voidElements, name.toUpperCase()) && children.length === 0;
-                if (selfCloseTag) return '<' + name + ' ' + attrs.join(' ') + ' />';
-                return '<' + name + ' ' + attrs.join(' ') + '>' + _.map(children, function(child) {
-                    return child.toHtmlString();
-                }).join('') + '</' + name + '>';
-            }
-        }
-    }
-    return {
-        createElement: node,
-        createTextNode: function(value) {
-            return {
-                toHtmlString: function() { return value; }
-            };
-        }   
-    };
 }
 
 function buildRef(id) {
@@ -219,6 +194,10 @@ function renderToNode(el, doc, context) {
     }
 }   
 
+exports.renderToString = function(el, context) {
+    return _.map(renderToNode(el, Stringifier()), function(n) { return n.toHtmlString(); }).join('');
+};
+
 exports.el = el;
 
 exports.sel = function(name, children) { return el(name, {}, children); }; // simple node sel(name, children)
@@ -228,10 +207,6 @@ exports.vel = function(name, attrs) { return el(name, attrs, []); }; // void nod
 exports.nbsp = function(times) { return el('span', { __asHtml: _.times(times || 1, function() { return '&nbsp;'; }) }); };
 
 exports.text = function(text) { return el('span', {}, text); };
-
-exports.renderToString = function(el, context) {
-    return _.map(renderToNode(el, stringifyDoc()), function(n) { return n.toHtmlString(); }).join('');
-};
 
 exports.elements = function() { return _.map(arguments, function(item) { return item; }); };
 

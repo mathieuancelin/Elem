@@ -7,6 +7,7 @@ if (registrationFunction === undefined) {
 function registerWebComponent(tag, elem) {
   var thatDoc = document;
   var ElementProto = Object.create(HTMLElement.prototype);
+  
   ElementProto.createdCallback = function() {
     var props = {};
     for (var i in this.attributes) {
@@ -34,6 +35,7 @@ function registerWebComponent(tag, elem) {
       }); 
     }
   };
+
   ElementProto.attributeChangedCallback = function (attr, oldVal, newVal) {
     this.props[attr] = newVal;
     var props = this.props;
@@ -48,7 +50,8 @@ function registerWebComponent(tag, elem) {
         state: elem.state
       });
     }
-  }
+  };
+
   registrationFunction(tag, {
     prototype: ElementProto
   });
