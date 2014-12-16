@@ -55,6 +55,18 @@ As you construct the node tree with functions and arrays, it is prettry easy to 
 
 Attributes use camel case shaped keys, so something like `backgroundColor` will be rendered as `background-color`. Also, you can notice that the `class` attribute is named `className`. Also, you can provide an object for `className` value with boolean as values. Every key with a false value will not be rendered.
 
+```javascript
+var shouldDisplayDarkBackground = true;
+var shouldDisplayBrightBackground = !shouldDisplayDarkBackground; 
+Elem.el('div', { className: { withBackground: true, darkBackground: shouldDisplayDarkBackground, brighBackground: shouldDisplayBrightBackground }}, 'Hello');
+```
+
+will produce
+
+```html
+<div class="with-background dark-background">Hello</div>
+```
+
 As children are just nodes in an array, it is really easy to add or remove elements from your UI. You can also pass undefined elements or functions that can return undefined to not render nodes.
 
 If you want to provide a child as HTML value, just pass an object like `{__asHtml: '&nbsp;;-)'}`.
@@ -274,7 +286,7 @@ Elem.component({
 What about webcomponents ?
 ----------------------------
 
-You can use an Elem component to create webcomponent. To do that, just write somthing like 
+You can use an Elem component to create webcomponent. To do that, just write something like 
 
 ```javascript
 Elem.registerWebComponent('todo-list', {
