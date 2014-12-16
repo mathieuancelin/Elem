@@ -112,6 +112,34 @@ when creating a component, you can define
 
 you can pass an external with `Elem.state({...})`. Each time the state is changed, the render function will be called and the components will be re-rendered. You can avoid that by using `state.set(obj, true)`.
 
+You can also use a component into a tree of elements by using a component factory like :
+
+```javascript
+
+var InnerComponent = Elem.componentFactory({
+    render: function(state, props) {
+        return Elem.el('div', 
+            [
+                Elem.el('h3', "Hello World")
+            ]
+        );
+    }
+});
+
+Elem.component({
+    container: '#inner',
+    render: function(state, props) {
+        return Elem.el('div', [
+            Elem.el('h3', 'Inner component demo'),
+            InnerComponent()
+        ]);
+    }
+});
+
+```
+
+The `componentFactory(props)` function returns a function that you can call to create component that will be rendered in the element tree. The main advantage of using `componentFactory` is that when you change the state of the inner component, only that component will be re-rendered instead of the whole root component and its children.
+
 No let's write a more complicated component :
 
 ```javascript

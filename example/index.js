@@ -246,3 +246,45 @@ Elem.component({
 console.log(Elem.renderToString(TextBox()));
 console.log(Elem.renderToString(RenderOnlyTodoApp));
 console.log(Elem.renderToString(TodoApp(Elem.state(), {})));
+
+
+var InnerComponent = Elem.componentFactory({
+    init: function(state, props) {
+        state.set({
+            date: props.date || 'Inner'
+        });
+    },
+    render: function(state, props) {
+        return Elem.el('div', 
+            [
+                Elem.el('span', state().date.toString()),
+                Elem.el('br', ''),
+                Elem.el('button', { type: 'button', onclick: function() {
+                    state.set({
+                        date: new Date()
+                    });    
+                }, className: 'btn btn-primary' }, 'Update inner')
+            ]
+        );
+    }
+});
+
+Elem.component({
+    container: '#inner',
+    init: function(state, props) {
+        state.set({
+            date: 'Outter'
+        });
+    },
+    render: function(state, props) {
+        return Elem.el('div', [
+            Elem.el('h3', 'Outer component'),
+            InnerComponent({ date: 'outter ' + state().date }),
+            Elem.el('button', { type: 'button', onclick: function() {
+                state.set({
+                    date: new Date()
+                });    
+            }, className: 'btn btn-primary' }, 'Update outter')
+        ]);
+    }
+})

@@ -1,6 +1,6 @@
 var Common = require('./common');
 var _ = require('./utils');
-var component = require('./component');
+var Components = require('./component');
 var state = require('./state');
 var registerWebComponent = require('./webcomponent').registerWebComponent;
 var Stringifier = require('./stringify');
@@ -147,23 +147,35 @@ function el(name, attrs, children) {
             _.each(attrsArray, function(item) {
                 element.setAttribute(item.key, item.value);
             });
+            function appendSingleNode(__children, __element) {
+                if (_.isNumber(__children)) {
+                    __element.appendChild(doc.createTextNode(__children + ''));
+                } else if (_.isString(__children)) {
+                    __element.appendChild(doc.createTextNode(__children));
+                } else if (_.isBoolean(__children)) {
+                    __element.appendChild(doc.createTextNode(__children + ''));
+                } else if (_.isObject(__children) && __children.isElement) {
+                    __element.appendChild(__children.toHtmlNode(doc, context)); 
+                } else if (_.isObject(__children) && __children.__asHtml) {
+                    __element.innerHTML = __children.__asHtml;
+                } else if (__children.__componentFactory) {
+                    var compId = _.escape(_.uniqueId('component_'));
+                    var span = doc.createElement('span');
+                    span.setAttribute('data-componentid', compId);
+                    __element.appendChild(span);
+                    __children.renderTo('[data-componentid="' + compId + '"]');
+                } else {
+                    __element.appendChild(doc.createTextNode(__children.toString()));
+                }    
+            }
             if (!selfCloseTag) {
                 if (_.isArray(children)) {
                     _.each(children, function(child) {
-                        element.appendChild(child.toHtmlNode(doc, context)); 
+                        //element.appendChild(child.toHtmlNode(doc, context)); 
+                        appendSingleNode(child, element);
                     });
-                } else if (_.isNumber(children)) {
-                    element.appendChild(doc.createTextNode(children + ''));
-                } else if (_.isString(children)) {
-                    element.appendChild(doc.createTextNode(children));
-                } else if (_.isBoolean(children)) {
-                    element.appendChild(doc.createTextNode(children + ''));
-                } else if (_.isObject(children) && children.isElement) {
-                    element.appendChild(children.toHtmlNode(doc, context)); 
-                } else if (_.isObject(children) && children.__asHtml) {
-                    element.innerHTML = children.__asHtml;
                 } else {
-                    element.appendChild(doc.createTextNode(children.toString()));
+                    appendSingleNode(children, element);
                 }
             }
             return element;
@@ -234,7 +246,8 @@ exports.render = function(el, node, context) {
         });
     }
 };
-exports.component = component;
+exports.component = Components.component;
+exports.componentFactory = Components.componentFactory;
 exports.state = state;
 exports.Utils = _;
 exports.registerWebComponent = registerWebComponent;

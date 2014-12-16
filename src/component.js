@@ -1,7 +1,7 @@
 var Common = require('./common');
 var _ = require('./utils');
 
-module.exports = function(opts) {
+exports.component = function(opts) {
   var el = opts.container;
   var state = opts.state || Elem.state();
   var props = opts.props || {};
@@ -17,9 +17,11 @@ module.exports = function(opts) {
       if (eventCallbacks[name]) {
           eventCallbacks[name](e);    
       } else {
-          while(!eventCallbacks[name] && node.dataset.nodeid) {
+          while(!eventCallbacks[name] && node && node !== null && node.dataset && node.dataset.nodeid) {
               node = node.parentElement;
-              name = node.dataset.nodeid + "_" + e.type;
+              if (node && node !== null && node.dataset && node.dataset.nodeid) {
+                name = node.dataset.nodeid + "_" + e.type;
+              }
           }
           if (eventCallbacks[name]) {
               eventCallbacks[name](e);    
@@ -55,4 +57,20 @@ module.exports = function(opts) {
   rerender();
   state.onChange(rerender);
   return state;
+};
+
+exports.componentFactory = function(opts) {
+  return function(props) {
+    return {
+      __componentFactory: true,
+      renderTo: function(el) {
+        var opt = _.clone(opts);
+        opt.container = el;
+        opt.props = _.extend(_.clone(opts.props || {}), props || {});
+        setTimeout(function() {
+          exports.component(opt);
+        }, 0);
+      }
+    };  
+  }
 };
