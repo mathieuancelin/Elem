@@ -248,7 +248,7 @@ console.log(Elem.renderToString(RenderOnlyTodoApp));
 console.log(Elem.renderToString(TodoApp(Elem.state(), {})));
 
 
-var InnerComponent = Elem.componentFactory({
+var InnerComponent = Elem.component({
     init: function(state, props) {
         state.set({
             date: props.date || 'Inner'

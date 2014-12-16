@@ -14,8 +14,7 @@ API
 * `Elem.elements(elems...)` : creates an array or `Elem.el` based on function args
 * `Elem.render(elem, container)` : render an element to a container in the DOM
 * `Elem.renderToString(elem)` : render an element as an HTML string
-* `Elem.component(options)` : render a component and return its state. See the component section for options
-* `Elem.componentFactory(opts)` : return a factory function allowing simple instanciation of component to use them in element trees
+* `Elem.component(options)` : render a component and return its state. Return a factory function if opts does not contains a container. See the component section for options
 * `Elem.state(defaultValues)` : create a state object. Similar to Backbone models
 * `Elem.registerWebComponent(elemName, options)` : register a component as a webcomponent. See the webcomponent section for options.
 * `Elem.Utils` : a lot of utils function to deal with JavaScript structures. Similar to some underscore.js functions
@@ -24,8 +23,8 @@ API
   * `Elem.Perf.stop` : disable performance measures
   * `Elem.Perf.markStart(name)` : mark the start of a measure
   * `Elem.Perf.markStop(name)` : mark the stop of a measure
-  * `Elem.Perf.collectPerfs` : return all collected measures and clear the store
-  * `Elem.Perf.printPerfs` : print collected measures and clear the store
+  * `Elem.Perf.collectPerfs` : return all collected measures and clear the measures store
+  * `Elem.Perf.printPerfs` : print collected measures and clear the measures store
 
 Dependencies
 -------------
@@ -124,7 +123,8 @@ You can also use a component into a tree of elements by using a component factor
 
 ```javascript
 
-var InnerComponent = Elem.componentFactory({
+var InnerComponent = Elem.component({
+    // it's a factory because no container is provided
     render: function(state, props) {
         return Elem.el('div', 
             [
@@ -146,7 +146,7 @@ Elem.component({
 
 ```
 
-The `componentFactory(props)` function returns a function that you can call to create component that will be rendered in the element tree. The main advantage of using `componentFactory` is that when you change the state of the inner component, only that component will be re-rendered instead of the whole root component and its children.
+The `component(props)` function returns a function (if you don't provide a container) that you can call to create component that will be rendered in the element tree. The main advantage of using `component` as factory is that when you change the state of the inner component, only that component will be re-rendered instead of the whole root component and its children.
 
 No let's write a more complicated component :
 

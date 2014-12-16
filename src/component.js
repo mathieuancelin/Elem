@@ -2,6 +2,7 @@ var Common = require('./common');
 var _ = require('./utils');
 
 exports.component = function(opts) {
+  if (!opts.container) return exports.componentFactory(opts);
   var el = opts.container;
   var name = opts.name || 'Component';
   var state = opts.state || Elem.state();
