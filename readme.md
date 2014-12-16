@@ -15,6 +15,7 @@ API
 * `Elem.render: function(elem, container)` : render an element to a container in the DOM
 * `Elem.renderToString: function(elem)` : render an element as an HTML string
 * `Elem.component: function(options)` : render a component and return its state. See the component section for options
+* `Elem.componentFactory: function(opts)` : return a factory function allowing simple instanciation of component to use them in element trees
 * `Elem.state: function(defaultValues)` : create a state object. Similar to Backbone models
 * `Elem.registerWebComponent: `function(elemName, options)` : register a component as a webcomponent. See the webcomponent section for options.
 * `Elem.Utils` : a lot of utils function to deal with JavaScript structures. Similar to some underscore.js functions
@@ -120,7 +121,7 @@ var InnerComponent = Elem.componentFactory({
     render: function(state, props) {
         return Elem.el('div', 
             [
-                Elem.el('h3', "Hello World")
+                Elem.el('h3', "Hello " + props.name + "!")
             ]
         );
     }
@@ -131,7 +132,7 @@ Elem.component({
     render: function(state, props) {
         return Elem.el('div', [
             Elem.el('h3', 'Inner component demo'),
-            InnerComponent()
+            InnerComponent({ name: "World" })
         ]);
     }
 });
