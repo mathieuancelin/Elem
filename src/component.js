@@ -62,7 +62,7 @@ exports.component = function(opts) {
       Common.markStop(name + '.globalRendering');
   }
   rerender();
-  state.onChange(Common.defered(rerender));
+  state.onChange(rerender);//Common.defered(rerender));
   return state;
 };
 

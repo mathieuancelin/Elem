@@ -16,7 +16,6 @@ window.performance = window.performance || {
   clearMeasures: function() {}
 };
 
-
 window.requestAnimationFrame = 
     window.requestAnimationFrame || 
     window.mozRequestAnimationFrame ||
