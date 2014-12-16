@@ -23,8 +23,8 @@ API
   * `Elem.Perf.stop` : disable performance measures
   * `Elem.Perf.markStart(name)` : mark the start of a measure
   * `Elem.Perf.markStop(name)` : mark the stop of a measure
-  * `Elem.Perf.collectPerfs` : return all collected measures and clear the measures store
-  * `Elem.Perf.printPerfs` : print collected measures and clear the measures store
+  * `Elem.Perf.collectMeasures` : return all collected measures and clear the measures store
+  * `Elem.Perf.printMeasures` : print collected measures and clear the measures store
 
 Dependencies
 -------------

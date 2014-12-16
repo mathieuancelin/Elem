@@ -58,7 +58,7 @@ exports.markStop = function(name) {
   }
 };
 
-exports.collectPerfs = function() {
+exports.collectMeasures = function() {
   if (!exports.perfs) return [];
   var results = [];
   _.each(names, function(name) {
@@ -70,9 +70,9 @@ exports.collectPerfs = function() {
   return results;
 };
 
-exports.printPerfs = function() {
+exports.printMeasures = function() {
   if (!exports.perfs) return;
-  console.table(exports.collectPerfs());
+  console.table(exports.collectMeasures());
 };
 
 exports.defer = function(cb) {

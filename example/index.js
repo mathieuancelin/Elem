@@ -303,5 +303,5 @@ Elem.component({
 });
 
 Elem.Perf.markStop('perfs');
-Elem.Perf.printPerfs();
+Elem.Perf.printMeasures();
 Elem.Perf.stop();

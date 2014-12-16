@@ -260,6 +260,6 @@ exports.Perf = {
     stop: function() { Common.stop = false; },
     markStart: Common.markStart,
     markStop: Common.markStop,
-    collectPerfs: Common.collectPerfs,
-    printPerfs: Common.printPerfs
+    collectMeasures: Common.collectMeasures,
+    printMeasures: Common.printMeasures
 };
