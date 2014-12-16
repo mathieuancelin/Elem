@@ -58,7 +58,13 @@ Attributes use camel case shaped keys, so something like `backgroundColor` will 
 ```javascript
 var shouldDisplayDarkBackground = true;
 var shouldDisplayBrightBackground = !shouldDisplayDarkBackground; 
-Elem.el('div', { className: { withBackground: true, darkBackground: shouldDisplayDarkBackground, brighBackground: shouldDisplayBrightBackground }}, 'Hello');
+Elem.el('div', { 
+  className: { 
+    withBackground: true, 
+    darkBackground: shouldDisplayDarkBackground, 
+    brighBackground: shouldDisplayBrightBackground 
+  }
+}, 'Hello');
 ```
 
 will produce
