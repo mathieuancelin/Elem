@@ -6,19 +6,26 @@ Simple and idiotic lib to build UI components. Elem.js is just a quick and dirty
 API
 ----------
 
-* `Elem.el: function(name, attributes, children)` : Create a representation of an HTML element. Children can be a string/number/boolean, an `Elem.el`, an array of `Elem.el` or a `__asHtml` object.
-* `Elem.sel: function(name, children)` : Create a representation of a simple HTML element
-* `Elem.vel: function(name, attributes)` : Create a representation of a void HTML element
-* `Elem.nbsp: function(times)` : creates a `<span>` containing one or more `&nbsp;`
-* `Elem.text: function(value)` : creates a `<span>value</span>`
-* `Elem.elements: function(elems...)` : creates an array or `Elem.el` based on function args
-* `Elem.render: function(elem, container)` : render an element to a container in the DOM
-* `Elem.renderToString: function(elem)` : render an element as an HTML string
-* `Elem.component: function(options)` : render a component and return its state. See the component section for options
-* `Elem.componentFactory: function(opts)` : return a factory function allowing simple instanciation of component to use them in element trees
-* `Elem.state: function(defaultValues)` : create a state object. Similar to Backbone models
-* `Elem.registerWebComponent: `function(elemName, options)` : register a component as a webcomponent. See the webcomponent section for options.
+* `Elem.el(name, attributes, children)` : Create a representation of an HTML element. Children can be a string/number/boolean, an `Elem.el`, an array of `Elem.el` or a `__asHtml` object.
+* `Elem.sel(name, children)` : Create a representation of a simple HTML element
+* `Elem.vel(name, attributes)` : Create a representation of a void HTML element
+* `Elem.nbsp(times)` : creates a `<span>` containing one or more `&nbsp;`
+* `Elem.text(value)` : creates a `<span>value</span>`
+* `Elem.elements(elems...)` : creates an array or `Elem.el` based on function args
+* `Elem.render(elem, container)` : render an element to a container in the DOM
+* `Elem.renderToString(elem)` : render an element as an HTML string
+* `Elem.component(options)` : render a component and return its state. See the component section for options
+* `Elem.componentFactory(opts)` : return a factory function allowing simple instanciation of component to use them in element trees
+* `Elem.state(defaultValues)` : create a state object. Similar to Backbone models
+* `Elem.registerWebComponent(elemName, options)` : register a component as a webcomponent. See the webcomponent section for options.
 * `Elem.Utils` : a lot of utils function to deal with JavaScript structures. Similar to some underscore.js functions
+* `Elem.Perf` : performance measurement tools 
+  * `Elem.Perf.start` : enable performance measures
+  * `Elem.Perf.stop` : disable performance measures
+  * `Elem.Perf.markStart(name)` : mark the start of a measure
+  * `Elem.Perf.markStop(name)` : mark the stop of a measure
+  * `Elem.Perf.collectPerfs` : return all collected measures and clear the store
+  * `Elem.Perf.printPerfs` : print collected measures and clear the store
 
 Dependencies
 -------------

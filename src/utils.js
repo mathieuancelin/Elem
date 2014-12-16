@@ -317,6 +317,18 @@ function findNode(selector) {
     return document.querySelector(node);
 }
 
+window.requestAnimationFrame = 
+    window.requestAnimationFrame || 
+    window.mozRequestAnimationFrame ||
+    window.webkitRequestAnimationFrame || 
+    window.msRequestAnimationFrame || 
+    (function() {
+        console.error('No requestAnimationFrame, using lame polyfill ...');
+        return function(callback, element){
+            window.setTimeout(callback, 1000 / 60);
+        }    
+    })();
+
 exports.escape = createEscaper(escapeMap, keys);
 exports.keys = keys;
 exports.values = values;
@@ -355,3 +367,11 @@ exports.negate = negate;
 exports.property = property;
 exports.identity = identity;
 exports.pairs = pairs;
+exports.defer = function(cb) {
+    window.requestAnimationFrame.call(window, cb);
+};
+exports.defered = function(cb) {
+    return function() {
+        exports.defer(cb);
+    };
+};

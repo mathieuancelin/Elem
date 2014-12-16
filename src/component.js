@@ -3,6 +3,7 @@ var _ = require('./utils');
 
 exports.component = function(opts) {
   var el = opts.container;
+  var name = opts.name || 'Component';
   var state = opts.state || Elem.state();
   var props = opts.props || {};
   var render = opts.render;
@@ -29,6 +30,7 @@ exports.component = function(opts) {
       }
   });
   function rerender() {
+      Common.markStart(name + '.globalRendering');
       _.each(oldHandlers, function(handler) {
           delete eventCallbacks[handler];
       });
@@ -37,7 +39,10 @@ exports.component = function(opts) {
       var key = focus.dataset.key; //$(focus).data('key');
       var waitingHandlers = [];
       var refs = {};
-      Elem.render(render(state, _.clone(props), { refs: refs, getDOMNode: getDOMNode }), el, { waitingHandlers: waitingHandlers, __rootListener: true, refs: refs });
+      Common.markStart(name + '.render');
+      var elemToRender = render(state, _.clone(props), { refs: refs, getDOMNode: getDOMNode });
+      Common.markStop(name + '.render');
+      Elem.render(elemToRender, el, { waitingHandlers: waitingHandlers, __rootListener: true, refs: refs });
       afterRender(state, _.clone(props), { refs: refs, getDOMNode: getDOMNode });
       if (key) {
           var focusNode = document.querySelector('[data-key="' + key + '"]');//$('[data-key="' + key + '"]');
@@ -53,9 +58,10 @@ exports.component = function(opts) {
               handler.callback.apply({ render: render }, arguments);                        
           }
       });
+      Common.markStop(name + '.globalRendering');
   }
   rerender();
-  state.onChange(rerender);
+  state.onChange(_.defered(rerender));
   return state;
 };
 
@@ -67,9 +73,9 @@ exports.componentFactory = function(opts) {
         var opt = _.clone(opts);
         opt.container = el;
         opt.props = _.extend(_.clone(opts.props || {}), props || {});
-        setTimeout(function() {
+        _.defer(function() {
           exports.component(opt);
-        }, 0);
+        });
       }
     };  
   }

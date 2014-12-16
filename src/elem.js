@@ -171,7 +171,6 @@ function el(name, attrs, children) {
             if (!selfCloseTag) {
                 if (_.isArray(children)) {
                     _.each(children, function(child) {
-                        //element.appendChild(child.toHtmlNode(doc, context)); 
                         appendSingleNode(child, element);
                     });
                 } else {
@@ -207,7 +206,10 @@ function renderToNode(el, doc, context) {
 }   
 
 exports.renderToString = function(el, context) {
-    return _.map(renderToNode(el, Stringifier()), function(n) { return n.toHtmlString(); }).join('');
+    Common.markStart('Elem.renderToString');
+    var str = _.map(renderToNode(el, Stringifier()), function(n) { return n.toHtmlString(); }).join('');
+    Common.markStop('Elem.renderToString');
+    return str;
 };
 
 exports.el = el;
@@ -223,6 +225,7 @@ exports.text = function(text) { return el('span', {}, text); };
 exports.elements = function() { return _.map(arguments, function(item) { return item; }); };
 
 exports.render = function(el, node, context) {
+    Common.markStart('Elem.render');
     var waitingHandlers = (context || {}).waitingHandlers || [];
     var refs = (context || {}).refs || {};
     var props = (context || {}).props || {};
@@ -245,9 +248,18 @@ exports.render = function(el, node, context) {
             });   
         });
     }
+    Common.markStop('Elem.render');
 };
 exports.component = Components.component;
 exports.componentFactory = Components.componentFactory;
 exports.state = state;
 exports.Utils = _;
 exports.registerWebComponent = registerWebComponent;
+exports.Perf = {
+    start: function() { Common.perfs = true; },
+    stop: function() { Common.stop = false; },
+    markStart: Common.markStart,
+    markStop: Common.markStop,
+    collectPerfs: Common.collectPerfs,
+    printPerfs: Common.printPerfs
+};
