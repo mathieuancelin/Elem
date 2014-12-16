@@ -61,7 +61,7 @@ exports.component = function(opts) {
       Common.markStop(name + '.globalRendering');
   }
   rerender();
-  state.onChange(_.defered(rerender));
+  state.onChange(Common.defered(rerender));
   return state;
 };
 
@@ -73,7 +73,7 @@ exports.componentFactory = function(opts) {
         var opt = _.clone(opts);
         opt.container = el;
         opt.props = _.extend(_.clone(opts.props || {}), props || {});
-        _.defer(function() {
+        Common.defer(function() {
           exports.component(opt);
         });
       }

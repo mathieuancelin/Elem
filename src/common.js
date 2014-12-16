@@ -16,6 +16,19 @@ window.performance = window.performance || {
   clearMeasures: function() {}
 };
 
+
+window.requestAnimationFrame = 
+    window.requestAnimationFrame || 
+    window.mozRequestAnimationFrame ||
+    window.webkitRequestAnimationFrame || 
+    window.msRequestAnimationFrame || 
+    (function() {
+        console.error('No requestAnimationFrame, using lame polyfill ...');
+        return function(callback, element){
+            window.setTimeout(callback, 1000 / 60);
+        }    
+    })();
+
 var ElemMeasureStart = 'ElemMeasureStart';
 var ElemMeasureStop = 'ElemMeasureStop';
 var ElemMeasure = 'ElemComponentRenderingMeasure';
@@ -61,4 +74,14 @@ exports.collectPerfs = function() {
 exports.printPerfs = function() {
   if (!exports.perfs) return;
   console.table(exports.collectPerfs());
+};
+
+exports.defer = function(cb) {
+    window.requestAnimationFrame.call(window, cb);
+};
+
+exports.defered = function(cb) {
+    return function() {
+        exports.defer(cb);
+    };
 };
