@@ -13,7 +13,7 @@ exports.component = function(opts) {
   var afterRender = opts.afterRender || function() {};
   var getDOMNode = function() { return _.findNode(el); };
   if (opts.init) { opts.init(state, _.clone(props)); }
-  _.on(el, Common.events + ' ' + Common.mouseEvents, function(e) { // bubbles listener, TODO : handle mouse event in a clever way
+  _.on(el, Common.events, function(e) { // bubbles listener, TODO : handle mouse event in a clever way
       var node = e.target;
       var name = node.dataset.nodeid + "_" + e.type;
       if (eventCallbacks[name]) {

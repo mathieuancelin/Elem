@@ -198,7 +198,7 @@ function TextBox() {
                     onkeydown: updateModel,
                     onkeyup: updateModel,
                     onkeypress: updateModel,
-                    onkeychange: updateModel
+                    onchange: updateModel
                 }, [])
             )
         ])

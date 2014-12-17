@@ -295,7 +295,7 @@ function startsWith(source, start) {
     return source.indexOf(start) === 0; 
 }
 
-function functionfocus(elem) { 
+function focus(elem) { 
     if (elem.focus) elem.focus();
 }
 
@@ -304,12 +304,9 @@ function hasFocus(elem) {
 }
 
 function on(node, types, callback) {
-    each(types.split(' '), function(type) {
-        if (isString(node)) {
-            document.querySelector(node).addEventListener(type, callback);
-        } else {
-            node.addEventListener(type, callback);
-        }
+    var actual = isString(node) ? document.querySelector(node) : node;
+    each(types, function(type) {
+        actual.addEventListener(type, callback);
     });
 }
 
@@ -343,7 +340,7 @@ exports.isNaN = isNaN;
 exports.has = has;
 exports.dasherize = dasherize;
 exports.startsWith = startsWith;
-exports.functionfocus = functionfocus;
+exports.focus = focus;
 exports.hasFocus = hasFocus;
 exports.on = on;
 exports.findNode = findNode;

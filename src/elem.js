@@ -243,7 +243,7 @@ exports.render = function(el, node, context) {
     });
     if (!(context && context.__rootListener)) {  // external listener here
         _.each(waitingHandlers, function(handler) { // handler on each concerned node
-            _.on('[data-nodeid="' + handler.id + '"]', handler.event.replace('on', ''), function() {
+            _.on('[data-nodeid="' + handler.id + '"]', [handler.event.replace('on', '')], function() {
                 handler.callback.apply({}, arguments);
             });   
         });
