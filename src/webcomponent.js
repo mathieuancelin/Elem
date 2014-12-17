@@ -19,7 +19,7 @@ function registerWebComponent(tag, elem) {
     if (props.noshadow !== 'true') {
       var shadowRoot = this.createShadowRoot();
       node = thatDoc.createElement('div');
-      node.setAttribute('id', 'reactcomponent');
+      node.setAttribute('class', 'elemcomponent');
       shadowRoot.appendChild(node);
     }
     this._node = node;
