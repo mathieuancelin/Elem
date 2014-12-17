@@ -166,7 +166,35 @@ Elem.component({
 
 The `component(props)` function returns a function (if you don't provide a container) that you can call to create component that will be rendered in the element tree. The main advantage of using `component` as factory is that when you change the state of the inner component, only that component will be re-rendered instead of the whole root component and its children.
 
-No let's write a more complicated component :
+But, how can I get an actual DOM inside my component ?
+---------------------------------------
+
+That's pretty easy, you just have to use refs. Refs give you access to any node inside your component that has been marked with a `ref` parameter. 
+
+```javascript
+
+function MyComponent(state, props, context) {
+
+  function clickMe() {
+    console.log(context.refs.myInputText.getDOMNode().value);
+  }
+
+  return Elem.el('div', [
+    Elem.el('input', { type: 'text', ref: 'myInputText' }, []),
+    Elem.el('button', { type: 'button', className: 'btn btn-primary', onclick: clickme }, 'Click me !!!')    
+  ]);
+}
+
+Elem.component({
+  container: '#test',
+  render: MyComponent
+});
+```
+
+You can also get the root DOM node by using `context.getDOMNode()`.
+
+Now let's write a more complicated component
+----------------------------
 
 ```javascript
 function NewTask(state, props) {
