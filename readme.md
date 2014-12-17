@@ -215,7 +215,44 @@ Elem.component({
 
 You can also get the root DOM node by using `context.getDOMNode()`.
 
-Now let's write a more complicated component
+What about webcomponents ?
+----------------------------
+
+You can use an Elem component to create webcomponent. To do that, just write something like 
+
+```javascript
+Elem.registerWebComponent('todo-list', {
+    init: function(state, props) {
+      state.set({
+        key: _.uniqueId('todolist-'),
+        tasks: [],
+        text: ''
+      });
+    },
+    render: TodoApp
+});
+``` 
+
+and use it like 
+
+```html
+<div>
+  <todo-list></todo-list>
+</div>
+```
+
+when creating a webcomponent, you can define options like
+
+```javascript
+{
+    init: 'init function that receive the state and props as parameters' 
+    state: 'the state of the webcomponent. If undefined, an empty one will be created'
+    render: 'function that will return an Elem node'
+}
+```
+Properties of the webcomponent are defined with the HTML tag attributes. You can use a `renderOnly="true"` attribute to not redraw the webcomponent all the time. You can also use `noshadow="false"` to avoid rendering the component inside the shadow root of the webcomponent.
+
+Now let's write a more complicated component : The Todo list
 ----------------------------
 
 ```javascript
@@ -338,40 +375,3 @@ Elem.component({
   render: TodoApp
 });
 ```
-
-What about webcomponents ?
-----------------------------
-
-You can use an Elem component to create webcomponent. To do that, just write something like 
-
-```javascript
-Elem.registerWebComponent('todo-list', {
-    init: function(state, props) {
-      state.set({
-        key: _.uniqueId('todolist-'),
-        tasks: [],
-        text: ''
-      });
-    },
-    render: TodoApp
-});
-``` 
-
-and use it like 
-
-```html
-<div>
-  <todo-list></todo-list>
-</div>
-```
-
-when creating a webcomponent, you can define options like
-
-```javascript
-{
-    init: 'init function that receive the state and props as parameters' 
-    state: 'the state of the webcomponent. If undefined, an empty one will be created'
-    render: 'function that will return an Elem node'
-}
-```
-Properties of the webcomponent are defined with the HTML tag attributes. You can use a `renderOnly="true"` attribute to not redraw the webcomponent all the time. You can also use `noshadow="false"` to avoid rendering the component inside the shadow root of the webcomponent.
