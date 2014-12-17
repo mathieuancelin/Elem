@@ -1,7 +1,7 @@
 Elem.js
 ================
 
-Simple and idiotic lib to build UI components. Elem.js is just a quick and dirty experiment to avoir string templates and string concat when modifying the DOM and does not care about performance at all (ie. recreate DOM nodes all the time).
+Simple and idiotic lib to build UI components. It's a templating library with the full expressiveness of JavaScript and support for all existing JavaScript libraries. Elem.js is just a quick and dirty experiment to avoir string templates and string concat when modifying the DOM and does not care about performance at all (ie. recreate DOM nodes all the time). 
 
 API
 ----------
