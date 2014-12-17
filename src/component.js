@@ -1,9 +1,7 @@
 var Common = require('./common');
 var _ = require('./utils');
 
-exports.component = function(opts) {
-  if (!opts.container) return exports.componentFactory(opts);
-  var el = opts.container;
+function mountComponent(el, opts) {
   var name = opts.name || 'Component';
   var state = opts.state || Elem.state();
   var props = opts.props || {};
@@ -64,20 +62,27 @@ exports.component = function(opts) {
   rerender();
   state.onChange(rerender);//Common.defered(rerender));
   return state;
-};
+}
 
-exports.componentFactory = function(opts) {
-  return function(props) {
-    return {
+function factory(opts) {
+  return function(props, to) {
+    var api = {
       __componentFactory: true,
       renderTo: function(el) {
         var opt = _.clone(opts);
-        opt.container = el;
         opt.props = _.extend(_.clone(opts.props || {}), props || {});
         Common.defer(function() {
-          exports.component(opt);
+          mountComponent(el, opt);
         });
       }
-    };  
-  }
+    };
+    if (to) return api.renderTo(to);
+    return api;  
+  }  
+}
+
+exports.component = function(opts) {
+  if (!opts.container) return factory(opts);
+  var el = opts.container;
+  mountComponent(el, opts);
 };

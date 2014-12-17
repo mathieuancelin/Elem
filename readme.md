@@ -1,7 +1,7 @@
 Elem.js
 ================
 
-Simple and idiotic lib to build UI components. It's a templating library with the full expressiveness of JavaScript and support for all existing JavaScript libraries. Elem.js is just a quick and dirty experiment to avoir string templates and string concat when modifying the DOM and does not care about performance at all (ie. recreate DOM nodes all the time). 
+Simple and idiotic lib to build UI components. It's a templating library promoting functionnal composition with the full expressiveness of JavaScript and support for all existing JavaScript libraries. Elem.js is just a quick and dirty experiment to avoir string templates and string concat when modifying the DOM and does not care about performance at all (ie. recreate DOM nodes all the time). 
 
 API
 ----------
@@ -127,15 +127,35 @@ when creating a component, you can define
 
 ```javascript
 {
-    container: 'the container where the component will be rendered'
+    container: 'the container where the component will be rendered. Can be omitted to use it as a factory'
     init: 'init function that receive the state and props as parameters' 
     state: 'the state of the component. If undefined, an empty one will be created'
-    props: 'properties for the component'
+    props: 'properties for the component, can be passed at instanciation if factory mode'
     render: 'function that will return an Elem node'
 }
 ```
 
 you can pass an external with `Elem.state({...})`. Each time the state is changed, the render function will be called and the components will be re-rendered. You can avoid that by using `state.set(obj, true)`.
+
+You can use `Elem.component` as a component factory like :
+
+```javascript
+
+var Hello = Elem.component({
+    // it's a factory because no container is provided
+    render: function(state, props) {
+        return Elem.el('div', 
+            [
+                Elem.el('h3', "Hello " + props.name + "!")
+            ]
+        );
+    }
+});
+
+Hello({ name: "World" }).renderTo('#hello'); // render inside #hello div
+Hello({ name: "World" }, '#hello2'); // render inside #hello div
+
+```
 
 You can also use a component into a tree of elements by using a component factory like :
 
