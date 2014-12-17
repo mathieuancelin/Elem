@@ -45,10 +45,8 @@ exports.markStop = function(name) {
   if (exports.perfs) {
     if (name) {
       window.performance.mark(name + '_stop');
-      window.performance.measure(name + '_measure', name + '_start', name + '_stop');
-      if (!_.contains(names, name + '_measure')) {
-        names.push(name + '_measure');
-      }
+      window.performance.measure(name, name + '_start', name + '_stop');
+      if (!_.contains(names, name)) names.push(name);
     } else {
       window.performance.mark(ElemMeasureStop);
       window.performance.measure(ElemMeasure, ElemMeasureStart, ElemMeasureStop);
