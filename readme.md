@@ -181,7 +181,9 @@ function MyComponent(state, props, context) {
 
   return Elem.el('div', [
     Elem.el('input', { type: 'text', ref: 'myInputText', value: 'Hello World!' }, []),
-    Elem.el('button', { type: 'button', className: 'btn btn-primary', onclick: clickme }, 'Click me !!!')    
+    Elem.el('button', 
+      { type: 'button', className: 'btn btn-primary', onclick: clickme }, 
+      'Click me !!!')    
   ]);
 }
 
