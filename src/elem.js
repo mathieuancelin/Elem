@@ -4,6 +4,7 @@ var Components = require('./component');
 var state = require('./state');
 var registerWebComponent = require('./webcomponent').registerWebComponent;
 var Stringifier = require('./stringify');
+var Dispatcher = require('./events');
 
 function styleToString(attrs) {
     if (_.isUndefined(attrs)) return '';
@@ -255,6 +256,7 @@ exports.componentFactory = Components.componentFactory;
 exports.state = state;
 exports.Utils = _;
 exports.registerWebComponent = registerWebComponent;
+exports.Dispatcher = Dispatcher;
 exports.Perf = {
     start: function() { Common.perfs = true; },
     stop: function() { Common.stop = false; },

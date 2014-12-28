@@ -1,8 +1,7 @@
 
-var registrationFunction = (document.registerElement || document.register).bind(document);
-if (registrationFunction === undefined) {
-  console.error('No registerElement function, webcomponents will not work !!!');
-}
+var registrationFunction = (document.registerElement || document.register || function() {
+    console.error('No registerElement function, webcomponents will not work !!!');
+}).bind(document);
 
 function registerWebComponent(tag, elem) {
   var thatDoc = document;
