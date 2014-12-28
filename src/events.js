@@ -26,6 +26,7 @@ module.exports = function() {
     trigger: fireCallbacks,
     dispatch: fireCallbacks,
     on: function(name, callback) {
+      this.off(name, callback);
       callbacks.push({ name: name, callback: callback });
     },
     off: function(name, callback) {
