@@ -1,8 +1,25 @@
 {
-  "name": "elem",
-  "version": "1.0.0",
-  "private": true,
+  "name": "elemjs",
+  "version": "0.1.0",
   "main": "src/elem.js",
+  "homepage": "https://github.com/mathieuancelin/Elem",
+  "keywords": [
+    "DOM",
+    "component",
+    "WebComponent",
+    "browser"
+  ],
+  "author": "Mathieu ANCELIN",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mathieuancelin/Elem.git"
+  },
+  "files": [
+    "dist/Elem.min.js",
+    "dist/Elem.js",
+    "LICENSE.txt"
+  ],
+  "license": "Apache-2.0",
   "dependencies": {
   },
   "devDependencies": {
@@ -12,6 +29,6 @@
   },
   "scripts": {
     "build": "browserify --standalone Elem src/elem.js | uglifyjs -mc > dist/Elem.min.js",
-    "watch": "watchify --standalone Elem src/elem.js -o dist/Elem.min.js --debug --verbose"
+    "watch": "watchify --standalone Elem src/elem.js -o dist/Elem.js --debug --verbose"
   }
 }
