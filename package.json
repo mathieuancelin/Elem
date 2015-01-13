@@ -1,6 +1,7 @@
 {
   "name": "elemjs",
-  "version": "0.1.0",
+  "description": "Simple tool to build UIs",
+  "version": "0.1.1",
   "main": "src/elem.js",
   "homepage": "https://github.com/mathieuancelin/Elem",
   "keywords": [
