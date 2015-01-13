@@ -1,7 +1,8 @@
 {
-  "name": "Elem.js",
+  "name": "elem",
   "version": "1.0.0",
   "private": true,
+  "main": "src/elem.js",
   "dependencies": {
   },
   "devDependencies": {

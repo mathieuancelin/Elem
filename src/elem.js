@@ -265,3 +265,9 @@ exports.Perf = {
     collectMeasures: Common.collectMeasures,
     printMeasures: Common.printMeasures
 };
+
+if (typeof define === 'function' && define.amd) {
+    define('elem', [], function() {
+        return module.exports;
+    });
+}

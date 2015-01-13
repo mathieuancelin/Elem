@@ -306,7 +306,7 @@ function hasFocus(elem) {
 function on(node, types, callback) {
     var actual = isString(node) ? document.querySelector(node) : node;
     each(types, function(type) {
-        actual.addEventListener(type, callback);
+        if (actual && actual !== null) actual.addEventListener(type, callback);
     });
 }
 
