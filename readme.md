@@ -3,6 +3,15 @@ Elem.js
 
 Simple and idiotic lib to build UI components. It's a templating library promoting functionnal composition with the full expressiveness of JavaScript and support for all existing JavaScript libraries. Elem.js is just a quick and dirty experiment to avoir string templates and string concat when modifying the DOM and does not care about performance at all (ie. recreate DOM nodes all the time). 
 
+Install
+-------
+
+with npm do :
+
+```
+npm install elemjs --save
+```
+
 API
 ----------
 
