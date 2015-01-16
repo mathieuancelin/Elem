@@ -5,7 +5,7 @@ exports.events = ['wheel','scroll','touchcancel','touchend','touchmove','touchst
     
 // redraw with requestAnimationFrame (https://developer.mozilla.org/fr/docs/Web/API/window.requestAnimationFrame)
 // perfs measures (http://www.html5rocks.com/en/tutorials/webperformance/usertiming/)
-window.performance = window.performance || {
+var Performances = {
   mark: function() {},
   measure: function() {},
   getEntriesByName: function() { return []; },
@@ -13,6 +13,12 @@ window.performance = window.performance || {
   clearMarks: function() {},
   clearMeasures: function() {}
 };
+
+if (typeof window.performance !== 'undefined' 
+    && typeof window.performance.mark !== 'undefined' 
+    && typeof window.performance.measure !== 'undefined') {
+  Performances = window.performance;  
+}
 
 window.requestAnimationFrame = 
     window.requestAnimationFrame || 
@@ -34,9 +40,9 @@ var names = [ElemMeasure];
 exports.markStart = function(name) {
   if (exports.perfs) {
     if (name) {
-      window.performance.mark(name + '_start');
+      Performances.mark(name + '_start');
     } else {
-      window.performance.mark(ElemMeasureStart);
+      Performances.mark(ElemMeasureStart);
     }
   }
 };
@@ -44,12 +50,12 @@ exports.markStart = function(name) {
 exports.markStop = function(name) {
   if (exports.perfs) {
     if (name) {
-      window.performance.mark(name + '_stop');
-      window.performance.measure(name, name + '_start', name + '_stop');
+      Performances.mark(name + '_stop');
+      Performances.measure(name, name + '_start', name + '_stop');
       if (!_.contains(names, name)) names.push(name);
     } else {
-      window.performance.mark(ElemMeasureStop);
-      window.performance.measure(ElemMeasure, ElemMeasureStart, ElemMeasureStop);
+      Performances.mark(ElemMeasureStop);
+      Performances.measure(ElemMeasure, ElemMeasureStart, ElemMeasureStop);
     }
   }
 };
@@ -58,10 +64,10 @@ exports.collectMeasures = function() {
   if (!exports.perfs) return [];
   var results = [];
   _.each(names, function(name) {
-    results = results.concat(window.performance.getEntriesByName(name));
+    results = results.concat(Performances.getEntriesByName(name));
   });
-  window.performance.clearMarks();
-  window.performance.clearMeasures();
+  Performances.clearMarks();
+  Performances.clearMeasures();
   names = [ElemMeasure];
   return results;
 };
