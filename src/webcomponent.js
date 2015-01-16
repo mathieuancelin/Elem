@@ -1,7 +1,11 @@
 
-var registrationFunction = (document.registerElement || document.register || function() {
-    console.error('No registerElement function, webcomponents will not work !!!');
-}).bind(document);
+var registrationFunction = undefined
+
+try {
+  registrationFunction = (document.registerElement || document.register || function() {
+      if (window.console) console.error('No registerElement function, webcomponents will not work !!!');
+  }).bind(document);
+} catch(e) {}
 
 function registerWebComponent(tag, elem) {
   var thatDoc = document;
@@ -56,4 +60,10 @@ function registerWebComponent(tag, elem) {
   });
 }
 
-exports.registerWebComponent = registerWebComponent;
+if (registrationFunction) {
+  exports.registerWebComponent = registerWebComponent;
+} else {
+  exports.registerWebComponent = function() {
+    if (window.console) console.error('WebComponent not available here :(');
+  };
+}

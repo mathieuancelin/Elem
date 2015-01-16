@@ -20,7 +20,7 @@ window.requestAnimationFrame =
     window.webkitRequestAnimationFrame || 
     window.msRequestAnimationFrame || 
     (function() {
-        console.error('No requestAnimationFrame, using lame polyfill ...');
+        if (window.console) console.error('No requestAnimationFrame, using lame polyfill ...');
         return function(callback, element){
             window.setTimeout(callback, 1000 / 60);
         }    
@@ -68,7 +68,7 @@ exports.collectMeasures = function() {
 
 exports.printMeasures = function() {
   if (!exports.perfs) return;
-  console.table(exports.collectMeasures());
+  if (window.console) console.table(exports.collectMeasures());
 };
 
 exports.defer = function(cb) {

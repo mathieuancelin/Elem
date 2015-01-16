@@ -243,9 +243,9 @@ Elem.component({
     }
 });
 
-console.log(Elem.renderToString(TextBox()));
-console.log(Elem.renderToString(RenderOnlyTodoApp));
-console.log(Elem.renderToString(TodoApp(Elem.state(), {})));
+if (window.console) console.log(Elem.renderToString(TextBox()));
+if (window.console) console.log(Elem.renderToString(RenderOnlyTodoApp));
+if (window.console) console.log(Elem.renderToString(TodoApp(Elem.state(), {})));
 
 
 var InnerComponent = Elem.component({

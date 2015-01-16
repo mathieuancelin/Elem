@@ -1,6 +1,15 @@
 var Common = require('./common');
 var _ = require('./utils');
 
+function hasData(node, name) {
+  return node.attributes && node.attributes['data-' + name];
+}
+
+function data(node, name) {
+  if (node.dataset) return node.dataset[name];
+  return node.attributes['data-' + name];
+}
+
 function mountComponent(el, opts) {
   var name = opts.name || 'Component';
   var state = opts.state || Elem.state();
@@ -13,14 +22,14 @@ function mountComponent(el, opts) {
   if (opts.init) { opts.init(state, _.clone(props)); }
   _.on(el, Common.events, function(e) { // bubbles listener, TODO : handle mouse event in a clever way
       var node = e.target;
-      var name = node.dataset.nodeid + "_" + e.type;
+      var name = data(node, 'nodeid') + '_' + e.type; //node.dataset.nodeid + "_" + e.type;
       if (eventCallbacks[name]) {
           eventCallbacks[name](e);    
       } else {
-          while(!eventCallbacks[name] && node && node !== null && node.dataset && node.dataset.nodeid) {
+          while(!eventCallbacks[name] && node && node !== null && hasData(node, 'nodeid')) {//node.dataset && node.dataset.nodeid) {
               node = node.parentElement;
-              if (node && node !== null && node.dataset && node.dataset.nodeid) {
-                name = node.dataset.nodeid + "_" + e.type;
+              if (node && node !== null && hasData(node, 'nodeid')) { //node.dataset && node.dataset.nodeid) {
+                name = data(node, 'nodeid') + '_' + e.type; //node.dataset.nodeid + "_" + e.type;
               }
           }
           if (eventCallbacks[name]) {
@@ -34,8 +43,8 @@ function mountComponent(el, opts) {
           delete eventCallbacks[handler];
       });
       oldHandlers = [];
-      var focus = document.activeElement; // TODO : check if input/select/textarea, remember cursor position here
-      var key = focus.dataset.key; //$(focus).data('key');
+      var focus = document.activeElement || {}; // TODO : check if input/select/textarea, remember cursor position here
+      var key = focus.dataset ? focus.dataset.key : (focus.attributes || [])['key']; // TODO : maybe a bug here
       var waitingHandlers = [];
       var refs = {};
       Common.markStart(name + '.render');
@@ -45,7 +54,7 @@ function mountComponent(el, opts) {
       afterRender(state, _.clone(props), { refs: refs, getDOMNode: getDOMNode });
       if (key) {
           var focusNode = document.querySelector('[data-key="' + key + '"]');//$('[data-key="' + key + '"]');
-          _.focus(focusNode); // focusNode.focus(); 
+          _.focus(focusNode); // focusNode.focus();  // TODO : maybe a bug here
           if (focusNode.value) { //focusNode.val()) {
               var strLength = focusNode.value.length * 2; // focusNode.val().length * 2;
               focusNode.setSelectionRange(strLength, strLength); //focusNode[0].setSelectionRange(strLength, strLength);  // TODO : handle other kind of input ... like select, etc ...   
