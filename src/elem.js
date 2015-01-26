@@ -266,6 +266,24 @@ exports.Perf = {
     printMeasures: Common.printMeasures
 };
 
+exports.predicate = function(predicate, what) {
+    if (_.isFunction(predicate)) {
+        if (predicate() === true) {
+            return what;
+        } else {
+            return undefined;
+        }
+    } else {
+        if (predicate === true) {
+            return what;
+        } else {
+            return undefined;
+        }
+    }
+};
+exports.p = exports.predicate;
+exports.ifPred = exports.predicate;
+
 if (typeof define === 'function' && define.amd) {
     define('elem', [], function() {
         return module.exports;
