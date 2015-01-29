@@ -24,7 +24,7 @@
     "uglify-js": "~2.4.15"
   },
   "scripts": {
-    "build": "browserify --standalone Elem src/elem.js | uglifyjs -mc > dist/elem.min.js",
+    "build": "browserify --standalone Elem src/elem.js -o dist/elem.js; uglifyjs dist/elem.js --source-map dist/elem.min.map --source-map-url elem.min.map -mc -o dist/elem.min.js",
     "watch": "watchify --standalone Elem src/elem.js -o dist/elem.js --debug --verbose"
   }
 }
