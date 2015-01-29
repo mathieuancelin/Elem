@@ -21,7 +21,8 @@ function mountComponent(el, opts) {
   var getDOMNode = function() { return _.findNode(el); };
   if (opts.init) { opts.init(state, _.clone(props)); }
   _.on(el, Common.events, function(e) { // bubbles listener, TODO : handle mouse event in a clever way
-      var node = e.target;
+      e = e || window.event;
+      var node = e.target || e.srcElement;
       var name = data(node, 'nodeid') + '_' + e.type; //node.dataset.nodeid + "_" + e.type;
       if (eventCallbacks[name]) {
           eventCallbacks[name](e);    
