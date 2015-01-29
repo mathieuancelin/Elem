@@ -444,20 +444,22 @@ exports.render = function(el, node, context) {
     if (node.ownerDocument) {
         doc = node.ownerDocument;
     }
-    var htmlNode = renderToNode(el, doc, { root: node, waitingHandlers: waitingHandlers, refs: refs, props: props });
     if (_.isString(node)) {
         node = doc.querySelector(node);
     }
-    while (node.firstChild) { node.removeChild(node.firstChild); }
-    _.each(htmlNode, function(n) {
-        node.appendChild(n);
-    });
-    if (!(context && context.__rootListener)) {  // external listener here
-        _.each(waitingHandlers, function(handler) { // handler on each concerned node
-            _.on('[data-nodeid="' + handler.id + '"]', [handler.event.replace('on', '')], function() {
-                handler.callback.apply({}, arguments);
-            });   
+    if (!_.isUndefined(node) && !_.isNull(node)) {
+        var htmlNode = renderToNode(el, doc, { root: node, waitingHandlers: waitingHandlers, refs: refs, props: props });
+        while (!_.isUndefined(node) && !_.isNull(node) && node.firstChild) { node.removeChild(node.firstChild); }
+        _.each(htmlNode, function(n) {
+            if (!_.isUndefined(node) && !_.isNull(node)) node.appendChild(n);
         });
+        if (!(context && context.__rootListener)) {  // external listener here
+            _.each(waitingHandlers, function(handler) { // handler on each concerned node
+                _.on('[data-nodeid="' + handler.id + '"]', [handler.event.replace('on', '')], function() {
+                    handler.callback.apply({}, arguments);
+                });   
+            });
+        }
     }
     Common.markStop('Elem.render');
 };
