@@ -21,10 +21,13 @@
   "devDependencies": {
     "watchify": "2.1.1",
     "browserify": "6.2.0",
-    "uglify-js": "~2.4.15"
+    "uglify-js": "~2.4.15",
+    "webpack": "~1.5.3"
   },
   "scripts": {
     "build": "browserify --standalone Elem src/elem.js -o dist/elem.js; uglifyjs dist/elem.js --source-map dist/elem.min.map --source-map-url elem.min.map -p 1 -mc -o dist/elem.min.js",
-    "watch": "watchify --standalone Elem src/elem.js -o dist/elem.js --debug --verbose"
+    "watch": "watchify --standalone Elem src/elem.js -o dist/elem.js --debug --verbose",
+    "pack": "webpack --colors -p src/elem.js dist/elem.min.js",
+    "packdev": "webpack --watch --colors -d src/elem.js dist/elem.js",
   }
 }
