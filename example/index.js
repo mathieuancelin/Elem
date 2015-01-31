@@ -93,8 +93,8 @@ function NewTask(state, props, comp) {
                 ),
                 Elem.el('div', { className: 'form-group' },
                     Elem.el('div', { className: 'btn-group' }, [
-                        Elem.el('button', { 
-                                type: 'button', 
+                        Elem.el('button', {
+                                type: 'button',
                                 className: 'btn btn-success',
                                 onclick: createNewTask
                             },
@@ -102,10 +102,10 @@ function NewTask(state, props, comp) {
                                 className: 'glyphicon glyphicon-floppy-saved'
                             }, [])
                         ),
-                        Elem.el('button', { 
+                        Elem.el('button', {
                                 onclick: deleteAllDone,
-                                type: 'button', 
-                                className: 'btn btn-danger' 
+                                type: 'button',
+                                className: 'btn btn-danger'
                             },
                             Elem.el('span', { className: 'glyphicon glyphicon-trash' }, [])
                         )
@@ -113,7 +113,7 @@ function NewTask(state, props, comp) {
                 )
             ])]
         )
-    );    
+    );
 }
 
 function TaskItem(state, props, comp) {
@@ -132,16 +132,16 @@ function TaskItem(state, props, comp) {
         Elem.el('div', { className: 'row' }, [
             Elem.el('div', { className: 'col-md-10' }, props.task.name),
             Elem.el('div', { className: 'col-md-2' },
-                Elem.el('span', { 
-                    onclick: flipTaskState, 
-                    className: { 
-                        label: true, 
-                        labelSuccess: props.task.done, 
-                        labelDefault: !props.task.done 
-                    }, 
-                    style: { 
-                        cursor: 'pointer' 
-                    } 
+                Elem.el('span', {
+                    onclick: flipTaskState,
+                    className: {
+                        label: true,
+                        labelSuccess: props.task.done,
+                        labelDefault: !props.task.done
+                    },
+                    style: {
+                        cursor: 'pointer'
+                    }
                 }, 'Done')
             )
         ])
@@ -180,6 +180,23 @@ Elem.registerWebComponent('todo-list', {
     render: TodoApp
 });
 
+Elem.registerWebComponent('todo-list1', {
+    init: function(state, props) {
+        state.set({
+            key: _.uniqueId('todolist-'),
+            tasks: [],
+            text: ''
+        });
+    },
+    render: function(s, p, c) {
+      return Elem.el('div', [
+        Elem.el('link', { rel: 'stylesheet', href: './css/bootstrap.min.css' }, []),
+        TodoApp(s, p, c)
+      ]);
+    }
+});
+
+
 var commonState = Elem.state({ name: 'Hello' });
 
 function TextBox() {
@@ -192,8 +209,8 @@ function TextBox() {
             Elem.el('div', { className: ['form-group', 'col-md-10'] },
                 Elem.el('input', {
                     placeholder: 'Type your name',
-                    type: 'text', 
-                    className: 'form-control', 
+                    type: 'text',
+                    className: 'form-control',
                     value: commonState().name,
                     onkeydown: updateModel,
                     onkeyup: updateModel,
@@ -202,7 +219,7 @@ function TextBox() {
                 }, [])
             )
         ])
-    ]); 
+    ]);
 }
 
 Elem.render(TextBox(), '#demo2');
@@ -211,33 +228,46 @@ function Displays(state, props) {
     return Elem.el('div', { className: 'col-md-4' }, [
         Elem.el('h3', 'Displays'),
         Elem.el('ul', { className: 'list-group' }, [
-            Elem.el('li', { className: 'list-group-item' }, 'Name : ' + state.get('name') || ''),
-            Elem.el('li', { className: 'list-group-item' }, 'Name : ' + state.get('name') || ''),
-            Elem.el('li', { className: 'list-group-item' }, 'Name : ' + state.get('name') || ''),
-            Elem.el('li', { className: 'list-group-item' }, 'Name : ' + state.get('name') || ''),
+            Elem.el('li', { className: 'list-group-item' }, 'Name : ' + state().name || ''),
+            Elem.el('li', { className: 'list-group-item' }, 'Name : ' + state().name || ''),
+            Elem.el('li', { className: 'list-group-item' }, 'Name : ' + state().name || ''),
+            Elem.el('li', { className: 'list-group-item' }, 'Name : ' + state().name || ''),
         ])
-    ]);   
+    ]);
 }
 
 Elem.component({
     container: '#demo3',
     state: commonState,
-    render: Displays 
+    render: Displays
 });
 
 Elem.component({
     container: '#timer',
     init: function(state, props) {
-        state.set({time: 0});
+        state.set({
+          seconds: 0,
+          hours: 0,
+          minutes: 0
+        });
         setInterval(function() {
-            state.set({time: state().time + 1});
+          var time = moment();
+          state.set({
+            seconds: time.seconds(),
+            hours: time.hours(),
+            minutes: time.minutes()
+          });
         }, 1000);
     },
     render: function(state, props) {
-        var value = (state.get('time') % 60);
+        var seconds = (state().seconds % 60);
+        var minutes = (state().minutes % 60);
+        var hours = (state().hours % 12);
         return Elem.el('div', { className: 'circle'}, [
-                Elem.el('div', { className: 'second', style: { transform: 'rotate(' + (value * 6) + 'deg);' }}, ''),
-                Elem.el('span', { className: 'centered' }, state.get('time') + ' sec.' )
+                Elem.el('div', { className: 'hour', style: { transform: 'rotate(' + (hours * 30) + 'deg);' }}, ''),
+                Elem.el('div', { className: 'minute', style: { transform: 'rotate(' + (minutes * 6) + 'deg);' }}, ''),
+                Elem.el('div', { className: 'second', style: { transform: 'rotate(' + (seconds * 6) + 'deg);' }}, ''),
+                Elem.el('span', { className: 'centered' }, state().hours + ' h ' + state().minutes + ' m ' + state().seconds + ' s')
             ]
         );
     }
@@ -255,14 +285,14 @@ var InnerComponent = Elem.component({
         });
     },
     render: function(state, props) {
-        return Elem.el('div', 
+        return Elem.el('div',
             [
                 Elem.el('span', state().date.toString()),
                 Elem.el('br', ''),
                 Elem.el('button', { type: 'button', onclick: function() {
                     state.set({
                         date: new Date()
-                    });    
+                    });
                 }, className: 'btn btn-primary' }, 'Update inner')
             ]
         );
@@ -283,7 +313,7 @@ Elem.component({
             Elem.el('button', { type: 'button', onclick: function() {
                 state.set({
                     date: new Date()
-                });    
+                });
             }, className: 'btn btn-primary' }, 'Update outter')
         ]);
     }

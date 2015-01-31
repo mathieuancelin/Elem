@@ -195,7 +195,7 @@ Elem.component({
 
 The `component(props)` function returns a function (if you don't provide a container) that you can call to create component that will be rendered in the element tree. The main advantage of using `component` as factory is that when you change the state of the inner component, only that component will be re-rendered instead of the whole root component and its children.
 
-But, how can I get an actual DOM inside my component ?
+But, how can I get an actual DOM node from inside my component ?
 ---------------------------------------
 
 That's pretty easy, you just have to use refs. Refs give you access to any node inside your component that has been marked with a `ref` parameter. 
