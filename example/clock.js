@@ -2,9 +2,9 @@ Elem.component({
     container: '#timer',
     init: function(state, props) {
         state.set({
-          seconds: 0,
-          hours: 0,
-          minutes: 0
+          seconds: moment().seconds(),
+          hours: moment().hours(),
+          minutes: moment().minutes()
         });
         setInterval(function() {
           var time = moment();

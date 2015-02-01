@@ -74,10 +74,33 @@ function mountComponent(el, opts) {
   return state;
 }
 
+function serverSideComponent(opts) {
+  var name = opts.name || 'Component';
+  var state = opts.state || Elem.state();
+  var props = opts.props || {};
+  var render = opts.render;
+  var afterRender = opts.afterRender || function() {};
+  if (opts.init) { opts.init(state, _.clone(props)); }
+  Common.markStart(name + '.globalRendering');
+  var refs = {};
+  Common.markStart(name + '.render');
+  var elemToRender = render(state, _.clone(props), { refs: refs, getDOMNode: function() {} });
+  Common.markStop(name + '.render');
+  var str = Elem.renderToString(elemToRender, { waitingHandlers: waitingHandlers, __rootListener: true, refs: refs });
+  afterRender(state, _.clone(props), { refs: refs, getDOMNode: getDOMNode });
+  Common.markStop(name + '.globalRendering');
+  return str;
+}
+
 function factory(opts) {
   return function(props, to) {
     var api = {
       __componentFactory: true,
+      renderToString: function() {
+        var opt = _.clone(opts);
+        opt.props = _.extend(_.clone(opts.props || {}), props || {});
+        return serverSideComponent(opt);
+      },
       renderTo: function(el) {
         var opt = _.clone(opts);
         opt.props = _.extend(_.clone(opts.props || {}), props || {});
@@ -95,4 +118,10 @@ exports.component = function(opts) {
   if (!opts.container) return factory(opts);
   var el = opts.container;
   mountComponent(el, opts);
+};
+
+exports.componentToString = function(opts) {
+  var opt = _.clone(opts);
+  opt.props = _.extend(_.clone(opts.props || {}), props || {});
+  return serverSideComponent(opt);
 };

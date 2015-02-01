@@ -254,7 +254,8 @@ exports.render = function(el, node, context) {
     Common.markStop('Elem.render');
 };
 exports.component = Components.component;
-exports.componentFactory = Components.componentFactory;
+exports.componentToString = Components.componentToString;
+// exports.componentFactory = Components.componentFactory;
 exports.state = state;
 exports.Utils = _;
 exports.registerWebComponent = registerWebComponent;
