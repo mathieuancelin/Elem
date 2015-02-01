@@ -14,6 +14,21 @@ var Performances = {
   clearMeasures: function() {}
 };
 
+// Avoid some issues in non broser environments
+if (typeof window === 'undefined') {
+  window = {};
+}
+// Avoid some issues in older browsers
+if (typeof window.console === 'undefined') {
+  window.console = {
+    log: function() {},
+    error: function() {},
+    table: function() {},
+    debug: function() {},
+    trace: function() {} 
+  };
+}
+
 if (typeof window.performance !== 'undefined' 
     && typeof window.performance.mark !== 'undefined' 
     && typeof window.performance.measure !== 'undefined') {

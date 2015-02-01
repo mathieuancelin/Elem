@@ -1,4 +1,5 @@
 var Common = require('./common');
+var _ = require('./utils');
 
 module.exports = function stringifyDoc() {
     function node(name) { 
