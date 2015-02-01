@@ -3,7 +3,7 @@ var registrationFunction = undefined
 
 try {
   registrationFunction = (document.registerElement || document.register || function() {
-      if (window.console) console.error('No registerElement function, webcomponents will not work !!!');
+      if (window.console) console.error('[ELEMJS] No registerElement function, webcomponents will not work !!!');
   }).bind(document);
 } catch(e) {}
 
@@ -64,6 +64,6 @@ if (registrationFunction) {
   exports.registerWebComponent = registerWebComponent;
 } else {
   exports.registerWebComponent = function() {
-    if (window.console) console.error('WebComponent not available here :(');
+    if (window.console) console.error('[ELEMJS] WebComponent not available here :(');
   };
 }

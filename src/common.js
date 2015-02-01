@@ -41,7 +41,7 @@ window.requestAnimationFrame =
     window.webkitRequestAnimationFrame || 
     window.msRequestAnimationFrame || 
     (function() {
-        if (window.console) console.error('No requestAnimationFrame, using lame polyfill ...');
+        if (window.console) console.error('[ELEMJS] No requestAnimationFrame, using lame polyfill ...');
         return function(callback, element){
             window.setTimeout(callback, 1000 / 60);
         }    
@@ -103,7 +103,7 @@ exports.defered = function(cb) {
 };
 
 if (!Function.prototype.bind) {
-  if (window.console) console.error('No Function.prototype.bind, using polyfill ...');
+  if (window.console) console.error('[ELEMJS] No Function.prototype.bind, using polyfill ...');
   Function.prototype.bind = function (oThis) {
     if (typeof this !== "function") {
       throw new TypeError("Function.prototype.bind - can't call bounded element");

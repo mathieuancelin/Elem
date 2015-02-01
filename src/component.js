@@ -1,5 +1,6 @@
 var Common = require('./common');
 var _ = require('./utils');
+var Elem = require('./elem');
 
 function hasData(node, name) {
   return node.attributes && node.attributes['data-' + name];
@@ -86,8 +87,8 @@ function serverSideComponent(opts) {
   Common.markStart(name + '.render');
   var elemToRender = render(state, _.clone(props), { refs: refs, getDOMNode: function() {} });
   Common.markStop(name + '.render');
-  var str = Elem.renderToString(elemToRender, { waitingHandlers: waitingHandlers, __rootListener: true, refs: refs });
-  afterRender(state, _.clone(props), { refs: refs, getDOMNode: getDOMNode });
+  var str = Elem.renderToString(elemToRender, { waitingHandlers: [], __rootListener: true, refs: refs });
+  afterRender(state, _.clone(props), { refs: refs, getDOMNode: function() {} });
   Common.markStop(name + '.globalRendering');
   return str;
 }
