@@ -105,9 +105,9 @@ function factory(opts) {
       renderTo: function(el) {
         var opt = _.clone(opts);
         opt.props = _.extend(_.clone(opts.props || {}), props || {});
-        Common.defer(function() {
-          mountComponent(el, opt);
-        });
+        //Common.defer(function() {
+        return mountComponent(el, opt);
+        //});
       }
     };
     if (to) return api.renderTo(to);

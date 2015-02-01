@@ -237,13 +237,13 @@ function Displays(state, props) {
 }
 
 Elem.component({
-    container: '#demo3',
+    //container: '#demo3',
     state: commonState,
     render: Displays
-});
+})({}).renderTo('#demo3');
 
-Elem.component({
-    container: '#timer',
+var Clock = Elem.component({
+    //container: '#timer',
     init: function(state, props) {
         state.set({
           seconds: moment().seconds(),
@@ -272,6 +272,9 @@ Elem.component({
         );
     }
 });
+
+var clock1 = Clock({});
+clock1.renderTo('#timer');
 
 if (window.console) console.log(Elem.renderToString(TextBox()));
 if (window.console) console.log(Elem.renderToString(RenderOnlyTodoApp));
