@@ -125,11 +125,11 @@ var timer = Elem.component({
     init: function(state, props) {
         state.set({time: 0});
         setInterval(function() {
-            state.set({time: state.all().time + 1});
+            state.set({time: state().time + 1});
         }, 1000);
     },
     render: function(state, props) {
-        return Elem.el('span', 'Elapsed : ' + state.all().time));
+        return Elem.el('span', 'Elapsed : ' + state().time));
     }
 });
 ```
@@ -330,17 +330,17 @@ Now let's write a more complicated component : The Todo list
 ```javascript
 function NewTask(state, props) {
   function deleteAllDone() {
-      var tasks = _.filter(state.all().tasks, function(item) {
+      var tasks = _.filter(state().tasks, function(item) {
           return item.done === false;
       });
       state.set({tasks: tasks});
   }
   function createNewTask() {
-      var tasks = state.all().tasks;
-      if (state.all().text !== '') {
+      var tasks = state().tasks;
+      if (state().text !== '') {
           tasks.push({
               _id: _.uniqueId('task_'),
-              name: state.all().text,
+              name: state().text,
               done: false
           });
           state.set({
@@ -362,9 +362,9 @@ function NewTask(state, props) {
           Elem.el('form', { role: 'form' }, [
               Elem.el('div', { className: ['form-group', 'col-md-10'] },
                   Elem.el('input', {
-                      dataKey: state.all().key,
+                      dataKey: state().key,
                       onchange: storeName,
-                      value: state.all().text,
+                      value: state().text,
                       placeholder: 'What do you have to do ?',
                       type: 'text', className: 'form-control',
                   }, [])
@@ -396,7 +396,7 @@ function NewTask(state, props) {
 
 function TaskItem(state, props) {
   function flipTaskState() {
-      var tasks = _.map(state.all().tasks, function(item) {
+      var tasks = _.map(state().tasks, function(item) {
           if (props.task._id === item._id) {
               var newTask = _.clone(item);
               newTask.done = !props.task.done;
@@ -430,7 +430,7 @@ function TodoApp(state, props, component) {
   return Elem.el('div', { className: 'col-md-4' }, [
       Elem.el('h3', 'Todo List'),
       NewTask(state, props, component),
-      Elem.el('ul', { className: 'list-group' }, _.map(state.all().tasks, function(task) {
+      Elem.el('ul', { className: 'list-group' }, _.map(state().tasks, function(task) {
           return TaskItem(state, { task: task}, component);
       }))
   ]);
