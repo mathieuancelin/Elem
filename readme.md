@@ -248,10 +248,14 @@ module.exports = Elem.component({
     },
     render: function(state, props) {
         return Elem.el('div', { className: 'circle'}, [
-                Elem.el('div', { className: 'hour', style: { transform: 'rotate(' + state().hours + 'deg)' }}, ''),
-                Elem.el('div', { className: 'minute', style: { transform: 'rotate(' + state().minutes + 'deg)' }}, ''),
-                Elem.el('div', { className: 'second', style: { transform: 'rotate(' + state().seconds + 'deg)' }}, ''),
-                Elem.el('span', { className: 'centered' }, moment().hours() + ' h ' + moment().minutes() + ' m ' + moment().seconds() + ' s')
+                Elem.el('div', { className: 'hour', 
+                    style: { transform: 'rotate(' + state().hours + 'deg)' }}, ''),
+                Elem.el('div', { className: 'minute', 
+                    style: { transform: 'rotate(' + state().minutes + 'deg)' }}, ''),
+                Elem.el('div', { className: 'second', 
+                    style: { transform: 'rotate(' + state().seconds + 'deg)' }}, ''),
+                Elem.el('span', { className: 'centered' }, 
+                    moment().hours() + ' h ' + moment().minutes() + ' m ' + moment().seconds() + ' s')
             ]
         );
     }
