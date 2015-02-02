@@ -127,7 +127,7 @@ var timer = Elem.component({
         }, 1000);
     },
     render: function(state, props) {
-        return Elem.el('span', 'Elapsed : ' + state.all().time'));
+        return Elem.el('span', 'Elapsed : ' + state.all().time));
     }
 });
 ```
@@ -224,10 +224,12 @@ Elem.component({
 
 You can also get the root DOM node by using `context.getDOMNode()`.
 
-But you can't render that stuff on the servier side right (isomorphic components) ?
+But you can't render that stuff server side (isomorphic apps), right ?
 ---------------------------------------------
 
-Actually you can and it's pretty easy. First you can use `Elem.renderToString` on any `Elem.el` node you want.
+Actually you can and it's pretty easy. 
+
+First you can use `Elem.renderToString` on any `Elem.el` node you want.
 
 But you can also do the same on components, let's write a funny clock component;
 
@@ -265,7 +267,9 @@ var Clock = require('./clock');
 
 app.get('/clock.html', function (req, res) {
   var clock = Clock(); // instanciate a component
-  res.send(clock.renderToString()); // or you can consider clock.renderToStaticHtml for a pure html output
+  res.send(clock.renderToString()); 
+  // or you can consider the followin for a pure html output
+  // clock.renderToStaticHtml 
 });
 
 var server = app.listen(3000, function () {
@@ -275,7 +279,7 @@ var server = app.listen(3000, function () {
 });
 ```
 
-on the client side, you just have to re-render the component at the same div dans Elem while reattach itself to the component.
+on the client side, you just have to re-render the component at the same div dans Elem while re-attach itself generated DOM.
 
 What about webcomponents ?
 ----------------------------
