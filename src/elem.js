@@ -253,6 +253,7 @@ exports.render = function(el, node, context) {
     }
     Common.markStop('Elem.render');
 };
+exports.unmountComponent = Components.unmountComponent;
 exports.component = Components.component;
 exports.componentToString = Components.componentToString;
 // exports.componentFactory = Components.componentFactory;

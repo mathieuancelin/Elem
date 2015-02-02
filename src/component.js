@@ -1,6 +1,7 @@
 var Common = require('./common');
 var _ = require('./utils');
 var Elem = require('./elem');
+var mounted = {};
 
 function hasData(node, name) {
   return node.attributes && node.attributes['data-' + name];
@@ -9,6 +10,13 @@ function hasData(node, name) {
 function data(node, name) {
   if (node.dataset) return node.dataset[name];
   return node.attributes['data-' + name];
+}
+
+function unmountComponent(el) {
+  if (mounted[el]) {
+    mounted[el]();
+    delete mounted[el];  
+  }
 }
 
 function mountComponent(el, opts) {
@@ -20,7 +28,13 @@ function mountComponent(el, opts) {
   var oldHandlers = [];
   var afterRender = opts.afterRender || function() {};
   var beforeRender = opts.beforeRender || function() {};
+  var unmount = opts.unmount || function() {};
   var getDOMNode = function() { return _.findNode(el); };
+  unmountComponent(el);
+  mounted[el] = function() {
+    unmount(state, _.clone(props), { refs: {}, getDOMNode: getDOMNode });
+    state.replace({});
+  };
   if (opts.init) { opts.init(state, _.clone(props)); }
   _.on(el, Common.events, function(e) { // bubbles listener, TODO : handle mouse event in a clever way
       e = e || window.event;
@@ -121,6 +135,8 @@ function factory(opts) {
     return api;  
   }  
 }
+
+exports.unmountComponent = unmountComponent;
 
 exports.component = function(opts) {
   if (!opts.container) return factory(opts);
