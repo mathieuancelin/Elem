@@ -19,6 +19,7 @@ function mountComponent(el, opts) {
   var eventCallbacks = {};
   var oldHandlers = [];
   var afterRender = opts.afterRender || function() {};
+  var beforeRender = opts.beforeRender || function() {};
   var getDOMNode = function() { return _.findNode(el); };
   if (opts.init) { opts.init(state, _.clone(props)); }
   _.on(el, Common.events, function(e) { // bubbles listener, TODO : handle mouse event in a clever way
@@ -49,6 +50,7 @@ function mountComponent(el, opts) {
       var key = focus.dataset ? focus.dataset.key : (focus.attributes || [])['key']; // TODO : maybe a bug here
       var waitingHandlers = [];
       var refs = {};
+      beforeRender(state, _.clone(props), { refs: refs, getDOMNode: getDOMNode });
       Common.markStart(name + '.render');
       var elemToRender = render(state, _.clone(props), { refs: refs, getDOMNode: getDOMNode });
       Common.markStop(name + '.render');
