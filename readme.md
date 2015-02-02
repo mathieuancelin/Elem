@@ -99,11 +99,31 @@ var node = Elem.el('div', { className: 'col-md-6' }, [
   Elem.el('h3', 'Hello World!'),
   Elem.el('button', { 
       className: ['btn', 'btn-primary'], 
-      onClick: saySomething 
+      onclick: saySomething 
     }, 'Say something'),
   Elem.el('p', { style: { backgroundColor: 'red' } }, "Lorem ipsum ....")
 ]);
 Elem.render(MyAwesomeNode, '#container');
+```
+
+And no, the output _WILL NOT BE_ 
+
+```html
+<div class="col-md-6">
+  <h3>Hello World</h3>
+  <button class="btn btn-primary" onclick="saySomething">Say Something</button>
+  <p style="background-color: red;">Lorem ipsum ....</p>
+</div>
+```
+
+but the following with an event listener on the root element of the component listening to `click` events on the button.
+
+```html
+<div class="col-md-6">
+  <h3>Hello World</h3>
+  <button class="btn btn-primary">Say Something</button>
+  <p style="background-color: red;">Lorem ipsum ....</p>
+</div>
 ```
 
 Supported events are 
