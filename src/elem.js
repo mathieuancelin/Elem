@@ -286,6 +286,13 @@ exports.predicate = function(predicate, what) {
 };
 exports.p = exports.predicate;
 exports.ifPred = exports.predicate;
+exports.cssClass = function(obj) {
+    return _.extend({}, {
+        extend: function(o) {
+            return _.extend({}, o, obj);    
+        }
+    }, obj);
+};
 
 if (typeof define === 'function' && define.amd) {
     define('elem', [], function() {

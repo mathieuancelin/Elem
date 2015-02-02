@@ -272,7 +272,7 @@ var Clock = require('./clock');
 app.get('/clock.html', function (req, res) {
   var clock = Clock(); // instanciate a component
   res.send(clock.renderToString()); 
-  // or you can consider the followin for a pure html output
+  // or you can consider the following code for a pure html output
   // clock.renderToStaticHtml 
 });
 
