@@ -258,7 +258,7 @@ module.exports = Elem.component({
 
 Now we can instanciate it on the server side, and render it as an HTML string :
 
-```
+```javascript
 var express = require('express');
 var app = express();
 var Clock = require('./clock');
