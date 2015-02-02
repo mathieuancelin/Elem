@@ -164,7 +164,7 @@ function el(name, attrs, children) {
                     var span = doc.createElement('span');
                     span.setAttribute('data-componentid', compId);
                     __element.appendChild(span);
-                    __children.renderTo('[data-componentid="' + compId + '"]');
+                    __children.renderTo('[data-componentid="' + compId + '"]', true);
                 } else {
                     __element.appendChild(doc.createTextNode(__children.toString()));
                 }    

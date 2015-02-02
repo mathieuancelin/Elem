@@ -123,12 +123,16 @@ function factory(opts) {
         opt.props = _.extend(_.clone(opts.props || {}), props || {});
         return serverSideComponent(opt);
       },
-      renderTo: function(el) {
+      renderTo: function(el, defer) {
         var opt = _.clone(opts);
         opt.props = _.extend(_.clone(opts.props || {}), props || {});
-        //Common.defer(function() {
-        return mountComponent(el, opt);
-        //});
+        if (defer) {
+          Common.defer(function() {
+            mountComponent(el, opt);
+          });
+        } else {
+          return mountComponent(el, opt);
+        }
       }
     };
     if (to) return api.renderTo(to);
