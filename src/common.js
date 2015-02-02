@@ -16,7 +16,9 @@ var Performances = {
 
 // Avoid some issues in non broser environments
 if (typeof window === 'undefined') {
-  window = {};
+  window = {
+    __fake: true
+  };
 }
 // Avoid some issues in older browsers
 if (typeof window.console === 'undefined') {

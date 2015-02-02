@@ -77,7 +77,7 @@ function mountComponent(el, opts) {
   return state;
 }
 
-function serverSideComponent(opts) {
+function serverSideComponent(opts, nodataid) {
   var name = opts.name || 'Component';
   var state = opts.state || Elem.state();
   var props = opts.props || {};
@@ -89,7 +89,7 @@ function serverSideComponent(opts) {
   Common.markStart(name + '.render');
   var elemToRender = render(state, _.clone(props), { refs: refs, getDOMNode: function() {} });
   Common.markStop(name + '.render');
-  var str = Elem.renderToString(elemToRender, { waitingHandlers: [], __rootListener: true, refs: refs });
+  var str = Elem.renderToString(elemToRender, { waitingHandlers: [], __rootListener: true, refs: refs, __noDataId: nodataid });
   afterRender(state, _.clone(props), { refs: refs, getDOMNode: function() {} });
   Common.markStop(name + '.globalRendering');
   return str;
@@ -99,6 +99,11 @@ function factory(opts) {
   return function(props, to) {
     var api = {
       __componentFactory: true,
+      renderToStaticHtml: function() {
+        var opt = _.clone(opts);
+        opt.props = _.extend(_.clone(opts.props || {}), props || {});
+        return serverSideComponent(opt, true);  
+      },
       renderToString: function() {
         var opt = _.clone(opts);
         opt.props = _.extend(_.clone(opts.props || {}), props || {});

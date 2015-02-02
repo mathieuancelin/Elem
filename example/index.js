@@ -264,9 +264,9 @@ var Clock = Elem.component({
         var minutes = (state().minutes % 60);
         var hours = (state().hours % 12);
         return Elem.el('div', { className: 'circle'}, [
-                Elem.el('div', { className: 'hour', style: { transform: 'rotate(' + (hours * 30) + 'deg);' }}, ''),
-                Elem.el('div', { className: 'minute', style: { transform: 'rotate(' + (minutes * 6) + 'deg);' }}, ''),
-                Elem.el('div', { className: 'second', style: { transform: 'rotate(' + (seconds * 6) + 'deg);' }}, ''),
+                Elem.el('div', { className: 'hour', style: { transform: 'rotate(' + (hours * 30) + 'deg)' }}, ''),
+                Elem.el('div', { className: 'minute', style: { transform: 'rotate(' + (minutes * 6) + 'deg)' }}, ''),
+                Elem.el('div', { className: 'second', style: { transform: 'rotate(' + (seconds * 6) + 'deg)' }}, ''),
                 Elem.el('span', { className: 'centered' }, state().hours + ' h ' + state().minutes + ' m ' + state().seconds + ' s')
             ]
         );
@@ -280,6 +280,8 @@ if (window.console) console.log(Elem.renderToString(TextBox()));
 if (window.console) console.log(Elem.renderToString(RenderOnlyTodoApp));
 if (window.console) console.log(Elem.renderToString(TodoApp(Elem.state(), {})));
 
+if (window.console) console.log(clock1.renderToString());
+if (window.console) console.log(clock1.renderToStaticHtml());
 
 var InnerComponent = Elem.component({
     init: function(state, props) {

@@ -224,6 +224,59 @@ Elem.component({
 
 You can also get the root DOM node by using `context.getDOMNode()`.
 
+But you can't render that stuff on the servier side right (isomorphic components) ?
+---------------------------------------------
+
+Actually you can and it's pretty easy. First you can use `Elem.renderToString` on any `Elem.el` node you want.
+
+But you can also do the same on components, let's write a funny clock component;
+
+```javascript
+module.exports = Elem.component({
+    init: function(state, props) {
+      function update() {
+        state.set({
+          seconds: (moment().seconds() % 60) * 6,
+          minutes: (moment().minutes() % 60) * 6,
+          hours: (moment().hours() % 12) * 30,
+        });
+      }
+      update();
+      setInterval(update, 1000);
+    },
+    render: function(state, props) {
+        return Elem.el('div', { className: 'circle'}, [
+                Elem.el('div', { className: 'hour', style: { transform: 'rotate(' + state().hours + 'deg)' }}, ''),
+                Elem.el('div', { className: 'minute', style: { transform: 'rotate(' + state().minutes + 'deg)' }}, ''),
+                Elem.el('div', { className: 'second', style: { transform: 'rotate(' + state().seconds + 'deg)' }}, ''),
+                Elem.el('span', { className: 'centered' }, moment().hours() + ' h ' + moment().minutes() + ' m ' + moment().seconds() + ' s')
+            ]
+        );
+    }
+});
+```
+
+Now we can instanciate it on the server side, and render it as an HTML string :
+
+```
+var express = require('express');
+var app = express();
+var Clock = require('./clock');
+
+app.get('/clock.html', function (req, res) {
+  var clock = Clock(); // instanciate a component
+  res.send(clock.renderToString()); // or you can consider clock.renderToStaticHtml for a pure html output
+});
+
+var server = app.listen(3000, function () {
+  var host = server.address().address;
+  var port = server.address().port;
+  console.log('Clock app listening at http://%s:%s', host, port);
+});
+```
+
+on the client side, you just have to re-render the component at the same div dans Elem while reattach itself to the component.
+
 What about webcomponents ?
 ----------------------------
 

@@ -17,7 +17,9 @@ var Performances = {
 
 // Avoid some issues in non broser environments
 if (typeof window === 'undefined') {
-  window = {};
+  window = {
+    __fake: true
+  };
 }
 // Avoid some issues in older browsers
 if (typeof window.console === 'undefined') {
@@ -145,6 +147,7 @@ function mountComponent(el, opts) {
   var eventCallbacks = {};
   var oldHandlers = [];
   var afterRender = opts.afterRender || function() {};
+  var beforeRender = opts.beforeRender || function() {};
   var getDOMNode = function() { return _.findNode(el); };
   if (opts.init) { opts.init(state, _.clone(props)); }
   _.on(el, Common.events, function(e) { // bubbles listener, TODO : handle mouse event in a clever way
@@ -175,6 +178,7 @@ function mountComponent(el, opts) {
       var key = focus.dataset ? focus.dataset.key : (focus.attributes || [])['key']; // TODO : maybe a bug here
       var waitingHandlers = [];
       var refs = {};
+      beforeRender(state, _.clone(props), { refs: refs, getDOMNode: getDOMNode });
       Common.markStart(name + '.render');
       var elemToRender = render(state, _.clone(props), { refs: refs, getDOMNode: getDOMNode });
       Common.markStop(name + '.render');
@@ -201,7 +205,7 @@ function mountComponent(el, opts) {
   return state;
 }
 
-function serverSideComponent(opts) {
+function serverSideComponent(opts, nodataid) {
   var name = opts.name || 'Component';
   var state = opts.state || Elem.state();
   var props = opts.props || {};
@@ -213,7 +217,7 @@ function serverSideComponent(opts) {
   Common.markStart(name + '.render');
   var elemToRender = render(state, _.clone(props), { refs: refs, getDOMNode: function() {} });
   Common.markStop(name + '.render');
-  var str = Elem.renderToString(elemToRender, { waitingHandlers: [], __rootListener: true, refs: refs });
+  var str = Elem.renderToString(elemToRender, { waitingHandlers: [], __rootListener: true, refs: refs, __noDataId: nodataid });
   afterRender(state, _.clone(props), { refs: refs, getDOMNode: function() {} });
   Common.markStop(name + '.globalRendering');
   return str;
@@ -223,6 +227,11 @@ function factory(opts) {
   return function(props, to) {
     var api = {
       __componentFactory: true,
+      renderToStaticHtml: function() {
+        var opt = _.clone(opts);
+        opt.props = _.extend(_.clone(opts.props || {}), props || {});
+        return serverSideComponent(opt, true);  
+      },
       renderToString: function() {
         var opt = _.clone(opts);
         opt.props = _.extend(_.clone(opts.props || {}), props || {});
@@ -463,7 +472,7 @@ function renderToNode(el, doc, context) {
 
 exports.renderToString = function(el, context) {
     Common.markStart('Elem.renderToString');
-    var str = _.map(renderToNode(el, Stringifier()), function(n) { return n.toHtmlString(); }).join('');
+    var str = _.map(renderToNode(el, Stringifier(context)), function(n) { return n.toHtmlString(); }).join('');
     Common.markStop('Elem.renderToString');
     return str;
 };
@@ -646,12 +655,21 @@ module.exports = function(mod) {
 var Common = require('./common');
 var _ = require('./utils');
 
-module.exports = function stringifyDoc() {
+module.exports = function stringifyDoc(ctx) {
+    ctx = ctx || {};
     function node(name) { 
         var attrs = [];
         var children = [];
         return {
-            setAttribute: function(key, value) { attrs.push(key + '="' + value + '"'); },
+            setAttribute: function(key, value) { 
+                if (key === 'data-nodeid') {
+                    if (!ctx.__noDataId) {
+                        attrs.push('data-snodeid' + '="' + value + '"'); 
+                    }
+                } else {
+                    attrs.push(key + '="' + value + '"'); 
+                }
+            },
             appendChild: function(child) { children.push(child); },
             toHtmlString: function() {
                 var selfCloseTag = _.contains(Common.voidElements, name.toUpperCase()) && children.length === 0;

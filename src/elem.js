@@ -208,7 +208,7 @@ function renderToNode(el, doc, context) {
 
 exports.renderToString = function(el, context) {
     Common.markStart('Elem.renderToString');
-    var str = _.map(renderToNode(el, Stringifier()), function(n) { return n.toHtmlString(); }).join('');
+    var str = _.map(renderToNode(el, Stringifier(context)), function(n) { return n.toHtmlString(); }).join('');
     Common.markStop('Elem.renderToString');
     return str;
 };
