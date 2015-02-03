@@ -15,7 +15,10 @@ function data(node, name) {
 function unmountComponent(el) {
   if (mounted[el]) {
     mounted[el]();
-    delete mounted[el];  
+    delete mounted[el]; 
+    //if (!_.isUndefined(document)) {
+    //  document.querySelector(el).innerHTML = '';
+    //} 
   }
 }
 
@@ -26,16 +29,16 @@ function mountComponent(el, opts) {
   var render = opts.render;
   var eventCallbacks = {};
   var oldHandlers = [];
-  var afterRender = opts.afterRender || function() {};
-  var beforeRender = opts.beforeRender || function() {};
-  var unmount = opts.unmount || function() {};
+  var afterRender = (opts.afterRender || function() {}).bind(opts);
+  var beforeRender = (opts.beforeRender || function() {}).bind(opts);
+  var unmount = (opts.unmount || function() {}).bind(opts);
   var getDOMNode = function() { return _.findNode(el); };
   unmountComponent(el);
   mounted[el] = function() {
     unmount(state, _.clone(props), { refs: {}, getDOMNode: getDOMNode });
     state.replace({});
   };
-  if (opts.init) { opts.init(state, _.clone(props)); }
+  if (opts.init) { opts.init.bind(opts)(state, _.clone(props)); }
   _.on(el, Common.events, function(e) { // bubbles listener, TODO : handle mouse event in a clever way
       e = e || window.event;
       var node = e.target || e.srcElement;
