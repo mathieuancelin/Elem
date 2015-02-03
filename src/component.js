@@ -16,9 +16,7 @@ function unmountComponent(el) {
   if (mounted[el]) {
     mounted[el]();
     delete mounted[el]; 
-    //if (!_.isUndefined(document)) {
-    //  document.querySelector(el).innerHTML = '';
-    //} 
+    // TODO : find a way to remove all listeners
   }
 }
 
@@ -26,20 +24,16 @@ function mountComponent(el, opts) {
   var name = opts.name || 'Component';
   var state = opts.state || Elem.state();
   var props = opts.props || {};
-  var render = opts.render;
   var eventCallbacks = {};
   var oldHandlers = [];
-  var afterRender = (opts.afterRender || function() {}).bind(opts);
+  var innerComponents = [];
+  var init = (opts.init || function() {}).bind(opts);
   var beforeRender = (opts.beforeRender || function() {}).bind(opts);
+  var render = (opts.render || function() {}).bind(opts);
+  var afterRender = (opts.afterRender || function() {}).bind(opts);
   var unmount = (opts.unmount || function() {}).bind(opts);
   var getDOMNode = function() { return _.findNode(el); };
-  unmountComponent(el);
-  mounted[el] = function() {
-    unmount(state, _.clone(props), { refs: {}, getDOMNode: getDOMNode });
-    state.replace({});
-  };
-  if (opts.init) { opts.init.bind(opts)(state, _.clone(props)); }
-  _.on(el, Common.events, function(e) { // bubbles listener, TODO : handle mouse event in a clever way
+  var eventsCallback = function(e) { // bubbles listener, TODO : handle mouse event in a clever way
       e = e || window.event;
       var node = e.target || e.srcElement;
       var name = data(node, 'nodeid') + '_' + e.type; //node.dataset.nodeid + "_" + e.type;
@@ -56,7 +50,15 @@ function mountComponent(el, opts) {
               eventCallbacks[name](e);    
           }
       }
-  });
+  };
+  unmountComponent(el);
+  mounted[el] = function() {
+    unmount(state, _.clone(props), { refs: {}, getDOMNode: getDOMNode });
+    state.replace({}, true);
+    _.off(el, Common.events, eventsCallback);
+  };
+  init(state, _.clone(props));
+  _.on(el, Common.events, eventsCallback);
   function rerender() {
       Common.markStart(name + '.globalRendering');
       _.each(oldHandlers, function(handler) {
@@ -65,13 +67,15 @@ function mountComponent(el, opts) {
       oldHandlers = [];
       var focus = document.activeElement || {}; // TODO : check if input/select/textarea, remember cursor position here
       var key = focus.dataset ? focus.dataset.key : (focus.attributes || [])['key']; // TODO : maybe a bug here
-      var waitingHandlers = [];
       var refs = {};
+      var waitingHandlers = [];
+      _.each(innerComponents, function(c) { unmountComponent(c); });
+      innerComponents = [];
       beforeRender(state, _.clone(props), { refs: refs, getDOMNode: getDOMNode });
       Common.markStart(name + '.render');
       var elemToRender = render(state, _.clone(props), { refs: refs, getDOMNode: getDOMNode });
       Common.markStop(name + '.render');
-      Elem.render(elemToRender, el, { waitingHandlers: waitingHandlers, __rootListener: true, refs: refs });
+      Elem.render(elemToRender, el, { waitingHandlers: waitingHandlers, __rootListener: true, refs: refs, __innerComponents: innerComponents });
       afterRender(state, _.clone(props), { refs: refs, getDOMNode: getDOMNode });
       if (key) {
           var focusNode = document.querySelector('[data-key="' + key + '"]');//$('[data-key="' + key + '"]');
@@ -106,7 +110,7 @@ function serverSideComponent(opts, nodataid) {
   Common.markStart(name + '.render');
   var elemToRender = render(state, _.clone(props), { refs: refs, getDOMNode: function() {} });
   Common.markStop(name + '.render');
-  var str = Elem.renderToString(elemToRender, { waitingHandlers: [], __rootListener: true, refs: refs, __noDataId: nodataid });
+  var str = Elem.renderToString(elemToRender, { waitingHandlers: [], __rootListener: true, refs: refs, __noDataId: nodataid, __innerComponents: [] });
   afterRender(state, _.clone(props), { refs: refs, getDOMNode: function() {} });
   Common.markStop(name + '.globalRendering');
   return str;

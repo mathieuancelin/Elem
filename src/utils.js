@@ -316,6 +316,17 @@ function on(node, types, callback) {
     });
 }
 
+function off(node, types, callback) {
+    var actual = isString(node) ? document.querySelector(node) : node;
+    each(types, function(type) {
+        if (actual && actual !== null) {
+            if (actual.removeEventListener) {
+                actual.removeEventListener(type, callback, false); // does not work in ff 3.5 without false
+            }
+        }
+    });
+}
+
 function findNode(selector) {
     return document.querySelector(node);
 }
@@ -349,6 +360,7 @@ exports.startsWith = startsWith;
 exports.focus = focus;
 exports.hasFocus = hasFocus;
 exports.on = on;
+exports.off = off;
 exports.findNode = findNode;
 exports.reduce = reduce;
 exports.reject = reject;

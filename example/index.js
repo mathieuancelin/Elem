@@ -292,7 +292,7 @@ var InnerComponent = Elem.component({
     render: function(state, props) {
         return Elem.el('div',
             [
-                Elem.el('span', state().date.toString()),
+                Elem.el('span', state().date + ''),
                 Elem.el('br', ''),
                 Elem.el('button', { type: 'button', onclick: function() {
                     state.set({

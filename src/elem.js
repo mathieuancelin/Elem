@@ -164,6 +164,7 @@ function el(name, attrs, children) {
                     var span = doc.createElement('span');
                     span.setAttribute('data-componentid', compId);
                     __element.appendChild(span);
+                    context.__innerComponents.push('[data-componentid="' + compId + '"]');
                     __children.renderTo('[data-componentid="' + compId + '"]', true);
                 } else {
                     __element.appendChild(doc.createTextNode(__children.toString()));
@@ -230,6 +231,7 @@ exports.render = function(el, node, context) {
     var waitingHandlers = (context || {}).waitingHandlers || [];
     var refs = (context || {}).refs || {};
     var props = (context || {}).props || {};
+    var __innerComponents = (context || {}).__innerComponents || [];
     var doc = document;
     if (node.ownerDocument) {
         doc = node.ownerDocument;
@@ -238,7 +240,7 @@ exports.render = function(el, node, context) {
         node = doc.querySelector(node);
     }
     if (!_.isUndefined(node) && !_.isNull(node)) {
-        var htmlNode = renderToNode(el, doc, { root: node, waitingHandlers: waitingHandlers, refs: refs, props: props });
+        var htmlNode = renderToNode(el, doc, { root: node, waitingHandlers: waitingHandlers, refs: refs, props: props, __innerComponents: __innerComponents });
         while (!_.isUndefined(node) && !_.isNull(node) && node.firstChild) { node.removeChild(node.firstChild); }
         _.each(htmlNode, function(n) {
             if (!_.isUndefined(node) && !_.isNull(node)) node.appendChild(n);

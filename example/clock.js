@@ -88,8 +88,10 @@ var Clock = Elem.component({
     }
     update();
     setInterval(update, 1000);
+    this.pouet = "pouet";
   },
   render: function(state, props) {
+    console.log(this.pouet);
     return Elem.el('div', { style: Style.circle }, [
       Elem.el('div', { style: Style.circleHour.extend({ transform: 'rotate(' + state().hours + 'deg)'    , '-webkit-transform': 'rotate(' + state().hours + 'deg)'  , '-moz-transform': 'rotate(' + state().hours + 'deg)'  , '-ms-transform': 'rotate(' + state().hours + 'deg)'   }) }, ''),
       Elem.el('div', { style: Style.circleMinute.extend({ transform: 'rotate(' + state().minutes + 'deg)', '-webkit-transform': 'rotate(' + state().minutes + 'deg)', '-moz-transform': 'rotate(' + state().minutes + 'deg)', '-ms-transform': 'rotate(' + state().minutes + 'deg)' }) }, ''),
