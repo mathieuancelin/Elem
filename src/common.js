@@ -1,3 +1,5 @@
+var _ = require('./utils');
+
 exports.debug = false;
 exports.perfs = false;
 exports.voidElements = ["AREA","BASE","BR","COL","COMMAND","EMBED","HR","IMG","INPUT","KEYGEN","LINK","META","PARAM","SOURCE","TRACK","WBR"];
