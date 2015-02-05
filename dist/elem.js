@@ -1058,7 +1058,7 @@ function off(node, types, callback) {
 }
 
 function findNode(selector) {
-    return document.querySelector(node);
+    return document.querySelector(selector);
 }
 
 exports.escape = createEscaper(escapeMap, keys);

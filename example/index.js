@@ -56,6 +56,7 @@ function NewTask(state, props, comp) {
     }
     function createNewTask() {
         var tasks = state().tasks;
+        console.log(comp.refs.taskInput.getDOMNode().value);
         if (state().text !== '') {
             tasks.push({
                 _id: _.uniqueId('task_'),
@@ -289,6 +290,12 @@ var InnerComponent = Elem.component({
             date: props.date || 'Inner'
         });
     },
+    unmount: function(state, props) {
+        //console.log('unmount inner ' + props.id);
+    },
+    beforeRender: function(state, props) {
+        //console.log('mount inner ' + props.id);
+    },
     render: function(state, props) {
         return Elem.el('div',
             [
@@ -311,10 +318,18 @@ Elem.component({
             date: 'Outter'
         });
     },
+    unmount: function(state, props) {
+        //console.log('unmount outter ');
+    },
+    beforeRender: function(state, props) {
+        //console.log('mount outter ');
+    },
     render: function(state, props) {
         return Elem.el('div', [
             Elem.el('h3', 'Outer component'),
-            InnerComponent({ date: 'outter ' + state().date }),
+            InnerComponent({ date: 'outter ' + state().date, id: 1 }),
+            InnerComponent({ date: 'outter ' + state().date, id: 2 }),
+            InnerComponent({ date: 'outter ' + state().date, id: 3 }),
             Elem.el('button', { type: 'button', onclick: function() {
                 state.set({
                     date: new Date()
