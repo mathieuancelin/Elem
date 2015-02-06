@@ -1,0 +1,7 @@
+<snippet>
+    <content><![CDATA[
+Elem.el('span', '$1')$2
+]]></content>
+    <tabTrigger>span</tabTrigger>
+    <scope>source.js</scope>
+</snippet>

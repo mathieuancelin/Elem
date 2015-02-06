@@ -1,0 +1,11 @@
+<snippet>
+    <content><![CDATA[
+Elem.el('button', { ${1:onclick: _perform, }type: 'button', style: {$2}, className: 'btn ${3:btn-primary}'}, [
+    Elem.el('i', { className: 'icon-${4:hdd} ${5:icon-white}' }, ''),
+    Elem.el('span', ' ${6:Save}')
+])
+$7
+]]></content>
+    <tabTrigger>button</tabTrigger>
+    <scope>source.js</scope>
+</snippet>

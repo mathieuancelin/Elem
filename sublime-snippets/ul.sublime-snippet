@@ -1,0 +1,9 @@
+<snippet>
+    <content><![CDATA[
+Elem.el('ul', { className: '$1' }, [
+    $2
+])
+]]></content>
+    <tabTrigger>ul</tabTrigger>
+    <scope>source.js</scope>
+</snippet>

@@ -1,0 +1,13 @@
+<snippet>
+    <content><![CDATA[
+Elem.el('div', { className: "control-group" }, [
+    Elem.el('label', { className: "control-label", style: { $1 } }, '${2:label}'),
+    Elem.el('div', { className: "controls", style: { $3 } }, [
+        Elem.el('input', { className: '$4', type: '${5:text}', value: ${6:state().value}${7:,oncchange: _change}}, [])   
+    ])
+])
+$8
+]]></content>
+    <tabTrigger>input</tabTrigger>
+    <scope>source.js</scope>
+</snippet>
