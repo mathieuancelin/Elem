@@ -1,5 +1,5 @@
 var ENV = {
-  rows: 100,
+  rows: 50,
   timeout: 0
 };
 
@@ -169,14 +169,14 @@ var DBMon = Elem.component({
         samples.splice(0, samples.length - 5);
       }
     }.bind(this));
+    state.set(state());
     i++;
     if (i % 50 === 0) {
       var time = Date.now() - start;
       start = Date.now();
       var n = (50 * 1000) / time;
-      console.log('framerate : ' + n + '/sec.');
+      console.log('renderRate : ' + n.toFixed(3) + '/sec.');
     }
-    state.set(state());
     setTimeout(function() { this.loadSamples(state); }.bind(this), ENV.timeout);
   },
 

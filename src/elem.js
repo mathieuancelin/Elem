@@ -271,7 +271,7 @@ exports.Perf = {
     collectMeasures: Common.collectMeasures,
     printMeasures: Common.printMeasures
 };
-
+exports.defer = Common.defer;
 exports.predicate = function(predicate, what) {
     if (_.isFunction(predicate)) {
         if (predicate() === true) {
@@ -288,7 +288,6 @@ exports.predicate = function(predicate, what) {
     }
 };
 exports.p = exports.predicate;
-exports.ifPred = exports.predicate;
 exports.cssClass = function(obj) {
     return _.extend({}, {
         extend: function(o) {
