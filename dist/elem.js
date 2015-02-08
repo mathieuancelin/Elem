@@ -107,6 +107,8 @@ exports.defered = function(cb) {
     };
 };
 
+exports.__internalAccess = {};
+
 if (!Function.prototype.bind) {
   if (window.console) console.error('[ELEMJS] No Function.prototype.bind, using polyfill ...');
   Function.prototype.bind = function (oThis) {
@@ -130,7 +132,6 @@ if (!Function.prototype.bind) {
 },{"./utils":7}],2:[function(require,module,exports){
 var Common = require('./common');
 var _ = require('./utils');
-var Elem = require('./elem');
 var mounted = {};
 
 function hasData(node, name) {
@@ -151,6 +152,7 @@ function unmountComponent(el) {
 }
 
 function mountComponent(el, opts) {
+  var Elem = Common.__internalAccess.api;
   var name = opts.name || 'Component';
   var state = opts.state || Elem.state();
   var props = opts.props || {};
@@ -229,6 +231,7 @@ function mountComponent(el, opts) {
 }
 
 function serverSideComponent(opts, nodataid) {
+  var Elem = Common.__internalAccess.api;
   var name = opts.name || 'Component';
   var state = opts.state || Elem.state();
   var props = opts.props || {};
@@ -290,7 +293,7 @@ exports.componentToString = function(opts) {
   opt.props = _.extend(_.clone(opts.props || {}), props || {});
   return serverSideComponent(opt);
 };
-},{"./common":1,"./elem":3,"./utils":7}],3:[function(require,module,exports){
+},{"./common":1,"./utils":7}],3:[function(require,module,exports){
 var Common = require('./common');
 var _ = require('./utils');
 var Components = require('./component');
@@ -353,19 +356,19 @@ function buildRef(id) {
 
 function extractEventHandlers(attrs, nodeId, context) {
     _.each(_.keys(attrs), function(key) {
-        var keyName = _.dasherize(key);  
+        var keyName = _.dasherize(key);
         if (_.startsWith(keyName, 'on')) {
             if (context && context.waitingHandlers) {
                 context.waitingHandlers.push({
                     root: context.root,
-                    id: nodeId, 
+                    id: nodeId,
                     event: keyName,
                     callback: attrs[key]
                 });
             }
-        } 
+        }
         if (keyName === 'ref' && context && context.refs) context.refs[attrs[key]] = buildRef(nodeId);
-    });   
+    });
 }
 
 function asAttribute(key, value) { return { key: key, value: value }; }
@@ -405,10 +408,21 @@ function el(name, attrs, children) {
         children = attrs;
         attrs = {};
     }
+    if (arguments.length > 3) {
+      name = arguments[0];
+      if (!attrs.isElement) {
+        attrs = arguments[1];
+      } else {
+        attrs = {};
+      }
+      children = [].concat(arguments);
+      children.shift();
+      children.shift();
+    }
     name = _.escape(name) || 'unknown';
     attrs = attrs || {};
     children = wrapChildren(children);
-    if (_.isRegExp(children) || _.isUndefined(children) || _.isNull(children)) children = []; 
+    if (_.isRegExp(children) || _.isUndefined(children) || _.isNull(children)) children = [];
     if (_.isArray(children)) {
         children = _.chain(children).map(function(child) {
             if (_.isFunction(child)) {
@@ -416,11 +430,11 @@ function el(name, attrs, children) {
             } else {
                 return child;
             }
-        }).filter(function(item) { 
-            return !_.isUndefined(item); 
+        }).filter(function(item) {
+            return !_.isUndefined(item);
         }).value();
-    } 
-    var selfCloseTag = _.contains(Common.voidElements, name.toUpperCase()) 
+    }
+    var selfCloseTag = _.contains(Common.voidElements, name.toUpperCase())
         && (_.isNull(children) || _.isUndefined(children) || (_.isArray(children) && children.length === 0));
     var attrsArray = attributesToArray(attrs);
     attrsArray.push(asAttribute('data-nodeid', _.escape(nodeId)));
@@ -449,7 +463,7 @@ function el(name, attrs, children) {
                 } else if (_.isBoolean(__children)) {
                     __element.appendChild(doc.createTextNode(__children + ''));
                 } else if (_.isObject(__children) && __children.isElement) {
-                    __element.appendChild(__children.toHtmlNode(doc, context)); 
+                    __element.appendChild(__children.toHtmlNode(doc, context));
                 } else if (_.isObject(__children) && __children.__asHtml) {
                     __element.innerHTML = __children.__asHtml;
                 } else if (__children.__componentFactory) {
@@ -461,7 +475,7 @@ function el(name, attrs, children) {
                     __children.renderTo('[data-componentid="' + compId + '"]', true);
                 } else {
                     __element.appendChild(doc.createTextNode(__children.toString()));
-                }    
+                }
             }
             if (!selfCloseTag) {
                 if (_.isArray(children)) {
@@ -475,7 +489,7 @@ function el(name, attrs, children) {
             return element;
         }
     };
-} 
+}
 
 function renderToNode(el, doc, context) {
     if (_.isFunction(el)) el = el((context || { props: {}}).props)
@@ -498,7 +512,7 @@ function renderToNode(el, doc, context) {
     } else {
         return [];
     }
-}   
+}
 
 exports.renderToString = function(el, context) {
     Common.markStart('Elem.renderToString');
@@ -506,6 +520,13 @@ exports.renderToString = function(el, context) {
     Common.markStop('Elem.renderToString');
     return str;
 };
+
+exports.renderToStaticHtml = function(el) {
+    Common.markStart('Elem.renderToStaticHtml');
+    var str = _.map(renderToNode(el, Stringifier({__noDataId: true})), function(n) { return n.toHtmlString(); }).join('');
+    Common.markStop('Elem.renderToStaticHtml');
+    return str;   
+}
 
 exports.el = el;
 
@@ -542,7 +563,7 @@ exports.render = function(el, node, context) {
             _.each(waitingHandlers, function(handler) { // handler on each concerned node
                 _.on('[data-nodeid="' + handler.id + '"]', [handler.event.replace('on', '')], function() {
                     handler.callback.apply({}, arguments);
-                });   
+                });
             });
         }
     }
@@ -551,7 +572,6 @@ exports.render = function(el, node, context) {
 exports.unmountComponent = Components.unmountComponent;
 exports.component = Components.component;
 exports.componentToString = Components.componentToString;
-// exports.componentFactory = Components.componentFactory;
 exports.state = state;
 exports.Utils = _;
 exports.registerWebComponent = registerWebComponent;
@@ -584,10 +604,12 @@ exports.p = exports.predicate;
 exports.cssClass = function(obj) {
     return _.extend({}, {
         extend: function(o) {
-            return _.extend({}, o, obj);    
+            return _.extend({}, o, obj);
         }
     }, obj);
 };
+
+Common.__internalAccess.api = exports;
 
 if (typeof define === 'function' && define.amd) {
     define('elem', [], function() {

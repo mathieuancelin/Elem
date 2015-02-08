@@ -106,6 +106,8 @@ exports.defered = function(cb) {
     };
 };
 
+exports.__internalAccess = {};
+
 if (!Function.prototype.bind) {
   if (window.console) console.error('[ELEMJS] No Function.prototype.bind, using polyfill ...');
   Function.prototype.bind = function (oThis) {

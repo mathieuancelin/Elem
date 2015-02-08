@@ -1,6 +1,5 @@
 var Common = require('./common');
 var _ = require('./utils');
-var Elem = require('./elem');
 var mounted = {};
 
 function hasData(node, name) {
@@ -21,6 +20,7 @@ function unmountComponent(el) {
 }
 
 function mountComponent(el, opts) {
+  var Elem = Common.__internalAccess.api;
   var name = opts.name || 'Component';
   var state = opts.state || Elem.state();
   var props = opts.props || {};
@@ -99,6 +99,7 @@ function mountComponent(el, opts) {
 }
 
 function serverSideComponent(opts, nodataid) {
+  var Elem = Common.__internalAccess.api;
   var name = opts.name || 'Component';
   var state = opts.state || Elem.state();
   var props = opts.props || {};

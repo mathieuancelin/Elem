@@ -1,4 +1,4 @@
-var RenderRate = function () {
+function RenderRate() {
   var container = document.createElement( 'div' );
   container.id  = 'stats';
   container.style.cssText = 'width:150px;opacity:0.9;cursor:pointer;position:fixed;right:0px;bottom:0px;';
@@ -14,31 +14,40 @@ var RenderRate = function () {
   msText.innerHTML= 'Memory';
   msDiv.appendChild( msText );
 
+  document.body.appendChild(container);
+
   var bucketSize = 20;
   var bucket = [];
   var lastTime  = Date.now();
   return {
     domElement: container,
+    update: this.ping,
     ping: function () {
       var start = lastTime;
       var stop = Date.now();
       var rate = 1000 / (stop - start);
       bucket.push(rate);
-      if (bucket.length > bucketSize) {
-        bucket.shift();
-      }
-      var sum = 0;
-      for (var i = 0; i < bucket.length; i++) {
-        sum = sum + bucket[i];
-      }
+      if (bucket.length > bucketSize) bucket.shift();
+      var sum = bucket.reduce(function(pv, cv) { return pv + cv; }, 0);
       msText.textContent = "Frame rate: " + (sum / bucket.length).toFixed(2) + "/sec";
       lastTime = stop;
     }
   }
 };
 
-var renderRate = new RenderRate();
-document.body.appendChild( renderRate.domElement );
+var renderRate = RenderRate();
+
+var RenderRate = Elem.component({
+  init: function(state) {
+    this.bucketSize = 20;
+    this.bucket = [];
+    this.lastTime = Date.now();
+    state.set({ value: 0.0 }, true);
+  },
+  render: function(state) {
+
+  }
+});
 
 var ENV = {
   rows: 50,
@@ -191,7 +200,7 @@ var DBMon = Elem.component({
   loadSamples: function (state) {
     loadCount++;
     var newData = getData();
-    
+
     Object.keys(newData.databases).forEach(function(dbname) {
       var sampleInfo = newData.databases[dbname];
 
@@ -238,4 +247,4 @@ var DBMon = Elem.component({
   }
 });
 
-DBMon({}).renderTo('#dbmon');
+DBMon().renderTo('#dbmon');
