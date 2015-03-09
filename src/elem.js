@@ -154,10 +154,15 @@ function el(name, attrs, children) {
             return JSON.stringify(this);
         },
         toHtmlNode: function(doc, context) {
+            var elemName = this.name;
             extractEventHandlers(attrs, nodeId, context);
             var element = doc.createElement(_.escape(name));
             _.each(attrsArray, function(item) {
-                element.setAttribute(item.key, item.value);
+                if (elemName && elemName === 'input' && item.key === 'value') {
+                    element.value = item.value;
+                } else {
+                    element.setAttribute(item.key, item.value);
+                }
             });
             function appendSingleNode(__children, __element) {
                 if (_.isNumber(__children)) {
