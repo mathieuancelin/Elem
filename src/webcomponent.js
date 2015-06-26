@@ -14,12 +14,12 @@ var Bus = EventBus();
 function registerWebComponent(tag, elem) {
   var thatDoc = document;
   var ElementProto = Object.create(HTMLElement.prototype);
-  
+
   ElementProto.createdCallback = function() {
     var props = {};
     for (var i in this.attributes) {
       var item = this.attributes[i];
-      props[item.name] = item.value;    
+      props[item.name] = item.value;
     }
     this.props = props;
     var node = this;
@@ -46,7 +46,7 @@ function registerWebComponent(tag, elem) {
       var from = evt.id;
       if (from !== this._id) {
         var name = evt.name;
-        var payload = evt.payload;  
+        var payload = evt.payload;
         this._internalBus._trigger(name, payload);
       }
     }.bind(this));
@@ -54,15 +54,15 @@ function registerWebComponent(tag, elem) {
     props.componentsBus = this._internalBus;
 
     if (props.renderOnly && props.renderOnly === true) {
-      this.renderedElement = Elem.render(elem, node); 
+      this.renderedElement = Elem.render(elem, node);
     } else {
       this.renderedElement = Elem.component({
         container: node,
         init: elem.init,
         render: elem.render,
-        props: props,
-        state: elem.state
-      }); 
+        defaultProps: function() { return props; },
+        initialState: elem.initialState
+      });
     }
   };
 
@@ -70,7 +70,7 @@ function registerWebComponent(tag, elem) {
     this.props[attr] = newVal;
     var props = this.props;
     if (this.props.renderOnly && this.props.renderOnly === true) {
-      this.renderedElement = Elem.render(elem, this._node); 
+      this.renderedElement = Elem.render(elem, this._node);
     } else {
       this.renderedElement = Elem.component({
         container: this._node,

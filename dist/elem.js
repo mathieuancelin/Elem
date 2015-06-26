@@ -131,6 +131,7 @@ if (!Function.prototype.bind) {
 }
 },{"./utils":7}],2:[function(require,module,exports){
 var Common = require('./common');
+var State = require('./state');
 var _ = require('./utils');
 var mounted = {};
 
@@ -146,7 +147,7 @@ function data(node, name) {
 function unmountComponent(el) {
   if (mounted[el]) {
     mounted[el]();
-    delete mounted[el]; 
+    delete mounted[el];
     // TODO : find a way to remove all listeners
   }
 }
@@ -154,23 +155,39 @@ function unmountComponent(el) {
 function mountComponent(el, opts) {
   var Elem = Common.__internalAccess.api;
   var name = opts.name || 'Component';
-  var state = opts.state || Elem.state();
-  var props = opts.props || {};
+  var defaultProps = opts.defaultProps || function() { return {}; };
+  var initialState = opts.initialState || function() { return {}; };
+  var state = State(initialState());
+  var props = defaultProps();
+  opts.props = props;
+  opts.state = state.all();
+  opts.setState = state.set;
+  opts.replaceState = state.replace;
+  state.onChange(function() {
+    opts.state = state.all();
+  });
   var eventCallbacks = {};
   var oldHandlers = [];
   var innerComponents = [];
-  var init = (opts.init || function() {}).bind(opts);
-  var beforeRender = (opts.beforeRender || function() {}).bind(opts);
-  var render = (opts.render || function() {}).bind(opts);
-  var afterRender = (opts.afterRender || function() {}).bind(opts);
-  var unmount = (opts.unmount || function() {}).bind(opts);
+  // autobinding
+  _.each(_.keys(opts), function(k) {
+    if (_.isFunction(opts[k])) {
+      opts[k] = opts[k].bind(opts);
+    }
+  });
+  var init = (opts.init || function() {});
+  var beforeRender = (opts.beforeRender || function() {});
+  var render = (opts.render || function() {});
+  var afterRender = (opts.afterRender || function() {});
+  var unmount = (opts.unmount || function() {});
   var getDOMNode = function() { return _.findNode(el); };
+  opts.context = { refs: {}, getDOMNode: getDOMNode };
   var eventsCallback = function(e) { // bubbles listener, TODO : handle mouse event in a clever way
       e = e || window.event;
       var node = e.target || e.srcElement;
       var name = data(node, 'nodeid') + '_' + e.type; //node.dataset.nodeid + "_" + e.type;
       if (eventCallbacks[name]) {
-          eventCallbacks[name](e);    
+          eventCallbacks[name](e);
       } else {
           while(!eventCallbacks[name] && node && node !== null && hasData(node, 'nodeid')) {//node.dataset && node.dataset.nodeid) {
               node = node.parentElement;
@@ -179,13 +196,13 @@ function mountComponent(el, opts) {
               }
           }
           if (eventCallbacks[name]) {
-              eventCallbacks[name](e);    
+              eventCallbacks[name](e);
           }
       }
   };
   unmountComponent(el);
   mounted[el] = function() {
-    unmount(state, _.clone(props), { refs: {}, getDOMNode: getDOMNode });
+    unmount(state, _.clone(props), opts.context);
     state.replace({}, true);
     _.off(el, Common.events, eventsCallback);
   };
@@ -199,28 +216,28 @@ function mountComponent(el, opts) {
       oldHandlers = [];
       var focus = document.activeElement || {}; // TODO : check if input/select/textarea, remember cursor position here
       var key = focus.dataset ? focus.dataset.key : (focus.attributes || [])['key']; // TODO : maybe a bug here
-      var refs = {};
+      opts.context.refs = {};
       var waitingHandlers = [];
       _.each(innerComponents, function(c) { unmountComponent(c); });
       innerComponents = [];
-      beforeRender(state, _.clone(props), { refs: refs, getDOMNode: getDOMNode });
+      beforeRender(state, _.clone(props), opts.context);
       Common.markStart(name + '.render');
-      var elemToRender = render(state, _.clone(props), { refs: refs, getDOMNode: getDOMNode });
+      var elemToRender = render(state, _.clone(props), opts.context);
       Common.markStop(name + '.render');
-      Elem.render(elemToRender, el, { waitingHandlers: waitingHandlers, __rootListener: true, refs: refs, __innerComponents: innerComponents });
-      afterRender(state, _.clone(props), { refs: refs, getDOMNode: getDOMNode });
+      Elem.render(elemToRender, el, { waitingHandlers: waitingHandlers, __rootListener: true, refs: opts.context.refs, __innerComponents: innerComponents });
+      afterRender(state, _.clone(props), opts.context);
       if (key) {
           var focusNode = document.querySelector('[data-key="' + key + '"]');//$('[data-key="' + key + '"]');
           _.focus(focusNode); // focusNode.focus();  // TODO : maybe a bug here
           if (focusNode.value) { //focusNode.val()) {
               var strLength = focusNode.value.length * 2; // focusNode.val().length * 2;
-              focusNode.setSelectionRange(strLength, strLength); //focusNode[0].setSelectionRange(strLength, strLength);  // TODO : handle other kind of input ... like select, etc ...   
+              focusNode.setSelectionRange(strLength, strLength); //focusNode[0].setSelectionRange(strLength, strLength);  // TODO : handle other kind of input ... like select, etc ...
           }
       }
       _.each(waitingHandlers, function(handler) {
           oldHandlers.push(handler.id + '_' + handler.event.replace('on', ''));
           eventCallbacks[handler.id + '_' + handler.event.replace('on', '')] = function() {
-              handler.callback.apply({ render: render }, arguments);                        
+              handler.callback.apply({ render: render }, arguments);
           }
       });
       Common.markStop(name + '.globalRendering');
@@ -233,39 +250,58 @@ function mountComponent(el, opts) {
 function serverSideComponent(opts, nodataid) {
   var Elem = Common.__internalAccess.api;
   var name = opts.name || 'Component';
-  var state = opts.state || Elem.state();
-  var props = opts.props || {};
+  var defaultProps = opts.defaultProps || function() { return {}; };
+  var initialState = opts.initialState || function() { return {}; };
+  var state = State(initialState());
+  var props = defaultProps();
+  opts.props = props;
+  opts.state = state.all();
+  opts.setState = state.set;
+  opts.replaceState = state.replace;
+  opts.context = { refs: refs, getDOMNode: function() {} };
+  // autobinding
+  _.each(_.keys(opts), function(k) {
+    if (_.isFunction(opts[k])) {
+      opts[k] = opts[k].bind(opts);
+    }
+  });
   var render = opts.render;
   var afterRender = opts.afterRender || function() {};
   if (opts.init) { opts.init(state, _.clone(props)); }
   Common.markStart(name + '.globalRendering');
   var refs = {};
   Common.markStart(name + '.render');
-  var elemToRender = render(state, _.clone(props), { refs: refs, getDOMNode: function() {} });
+  var elemToRender = render(state, _.clone(props), opts.context);
   Common.markStop(name + '.render');
   var str = Elem.renderToString(elemToRender, { waitingHandlers: [], __rootListener: true, refs: refs, __noDataId: nodataid, __innerComponents: [] });
-  afterRender(state, _.clone(props), { refs: refs, getDOMNode: function() {} });
+  afterRender(state, _.clone(props), opts.context);
   Common.markStop(name + '.globalRendering');
   return str;
 }
 
 function factory(opts) {
+  var defaultProps = {};
+  if (opts.defaultProps) {
+    defaultProps = opts.defaultProps();
+  }
   return function(props, to) {
     var api = {
       __componentFactory: true,
       renderToStaticHtml: function() {
         var opt = _.clone(opts);
-        opt.props = _.extend(_.clone(opts.props || {}), props || {});
-        return serverSideComponent(opt, true);  
+        opt.props = _.extend(_.clone(defaultProps || {}), props || {});
+        return serverSideComponent(opt, true);
       },
       renderToString: function() {
         var opt = _.clone(opts);
-        opt.props = _.extend(_.clone(opts.props || {}), props || {});
+        opt.props = _.extend(_.clone(defaultProps || {}), props || {});
         return serverSideComponent(opt);
       },
       renderTo: function(el, defer) {
         var opt = _.clone(opts);
-        opt.props = _.extend(_.clone(opts.props || {}), props || {});
+        opt.defaultProps = function() {
+          return _.extend(_.clone(defaultProps || {}), props || {});
+        };
         if (defer) {
           Common.defer(function() {
             mountComponent(el, opt);
@@ -276,8 +312,8 @@ function factory(opts) {
       }
     };
     if (to) return api.renderTo(to);
-    return api;  
-  }  
+    return api;
+  }
 }
 
 exports.unmountComponent = unmountComponent;
@@ -293,7 +329,8 @@ exports.componentToString = function(opts) {
   opt.props = _.extend(_.clone(opts.props || {}), props || {});
   return serverSideComponent(opt);
 };
-},{"./common":1,"./utils":7}],3:[function(require,module,exports){
+
+},{"./common":1,"./state":5,"./utils":7}],3:[function(require,module,exports){
 var Common = require('./common');
 var _ = require('./utils');
 var Components = require('./component');
@@ -693,6 +730,17 @@ module.exports = function(mod) {
     return _.clone(theModel);
   };
 
+  function set(obj, silentOrCallback) {
+    var silent = _.isBoolean(silentOrCallback) && silentOrCallback === true;
+    if (!_.isUndefined(obj) && _.isObject(obj)) {
+      _.map(_.keys(obj), function(k) {
+        theModel[k] = obj[k];
+      });
+      if (!silent) fireCallbacks();
+      if (!silent)(silentOrCallback || function() {})();
+    }
+  }
+
   return _.extend(api, {
     onChange: function(callback) {
       callbacks.push(callback);
@@ -706,19 +754,10 @@ module.exports = function(mod) {
     forceUpdate: function() {
       fireCallbacks();
     },
-    set: function(obj, silentOrCallback) {
-      var silent = _.isBoolean(silentOrCallback) && silentOrCallback === true;
-      if (!_.isUndefined(obj) && _.isObject(obj)) {
-        _.map(_.keys(obj), function(k) {
-          theModel[k] = obj[k];
-        });
-        if (!silent) fireCallbacks();
-        if (!silent)(silentOrCallback || function() {})();
-      }
-    },
+    set: set,
     replace: function(obj, silentOrCallback) {
       theModel = {};
-      this.set(obj, silentOrCallback);
+      set(obj, silentOrCallback);
     },
     remove: function(key) {
       delete theModel[key];
@@ -726,6 +765,7 @@ module.exports = function(mod) {
     }
   });
 };
+
 },{"./utils":7}],6:[function(require,module,exports){
 var Common = require('./common');
 var _ = require('./utils');
@@ -1188,12 +1228,12 @@ var Bus = EventBus();
 function registerWebComponent(tag, elem) {
   var thatDoc = document;
   var ElementProto = Object.create(HTMLElement.prototype);
-  
+
   ElementProto.createdCallback = function() {
     var props = {};
     for (var i in this.attributes) {
       var item = this.attributes[i];
-      props[item.name] = item.value;    
+      props[item.name] = item.value;
     }
     this.props = props;
     var node = this;
@@ -1220,7 +1260,7 @@ function registerWebComponent(tag, elem) {
       var from = evt.id;
       if (from !== this._id) {
         var name = evt.name;
-        var payload = evt.payload;  
+        var payload = evt.payload;
         this._internalBus._trigger(name, payload);
       }
     }.bind(this));
@@ -1228,15 +1268,15 @@ function registerWebComponent(tag, elem) {
     props.componentsBus = this._internalBus;
 
     if (props.renderOnly && props.renderOnly === true) {
-      this.renderedElement = Elem.render(elem, node); 
+      this.renderedElement = Elem.render(elem, node);
     } else {
       this.renderedElement = Elem.component({
         container: node,
         init: elem.init,
         render: elem.render,
-        props: props,
-        state: elem.state
-      }); 
+        defaultProps: function() { return props; },
+        initialState: elem.initialState
+      });
     }
   };
 
@@ -1244,7 +1284,7 @@ function registerWebComponent(tag, elem) {
     this.props[attr] = newVal;
     var props = this.props;
     if (this.props.renderOnly && this.props.renderOnly === true) {
-      this.renderedElement = Elem.render(elem, this._node); 
+      this.renderedElement = Elem.render(elem, this._node);
     } else {
       this.renderedElement = Elem.component({
         container: this._node,

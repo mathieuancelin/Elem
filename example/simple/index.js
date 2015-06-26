@@ -238,8 +238,15 @@ function Displays(state, props) {
 }
 
 Elem.component({
-    //container: '#demo3',
-    state: commonState,
+    initialState: function() {
+      return commonState.all();
+    },
+    init: function() {
+      var that = this;
+      commonState.onChange(function() {
+        that.replaceState(commonState.all());
+      });
+    },
     render: Displays
 })({}).renderTo('#demo3');
 

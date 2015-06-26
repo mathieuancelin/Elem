@@ -4,7 +4,7 @@
   "description": "An isomorphic component rendered from node js",
   "main": "index.js",
   "dependencies": {
-    "elemjs": "0.1.11",
+    "elemjs": "0.1.14",
     "express": "^4.11.2"
   }
 }

@@ -166,8 +166,8 @@ when creating a component, you can define
 {
     container: 'the container where the component will be rendered. Can be omitted to use it as a factory'
     init: 'init function that receive the state and props as parameters'
-    state: 'the state of the component. If undefined, an empty one will be created'
-    props: 'properties for the component, can be passed at instanciation if factory mode'
+    initialState: 'function that returns the initial state state of the component. If undefined, an empty one will be created'
+    defaultProps: 'function that returns the initial properties for the component, can be passed at instanciation if factory mode'
     render: 'function that will return an Elem node'
 }
 ```
@@ -349,8 +349,8 @@ when creating a webcomponent, you can define options like
 ```javascript
 {
     init: 'init function that receive the state and props as parameters'
-    state: 'the state of the webcomponent. If undefined, an empty one will be created'
-    render: 'function that will return an Elem node'
+    initialState: 'function that returns the initial state state of the component. If undefined, an empty one will be created'
+    defaultProps: 'function that returns the initial properties for the component, can be passed at instanciation if factory mode'    render: 'function that will return an Elem node'
 }
 ```
 Properties of the webcomponent are defined with the HTML tag attributes. You can use a `renderOnly="true"` attribute to not redraw the webcomponent all the time. You can also use `noshadow="false"` to avoid rendering the component inside the shadow root of the webcomponent.

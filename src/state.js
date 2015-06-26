@@ -16,6 +16,17 @@ module.exports = function(mod) {
     return _.clone(theModel);
   };
 
+  function set(obj, silentOrCallback) {
+    var silent = _.isBoolean(silentOrCallback) && silentOrCallback === true;
+    if (!_.isUndefined(obj) && _.isObject(obj)) {
+      _.map(_.keys(obj), function(k) {
+        theModel[k] = obj[k];
+      });
+      if (!silent) fireCallbacks();
+      if (!silent)(silentOrCallback || function() {})();
+    }
+  }
+
   return _.extend(api, {
     onChange: function(callback) {
       callbacks.push(callback);
@@ -29,19 +40,10 @@ module.exports = function(mod) {
     forceUpdate: function() {
       fireCallbacks();
     },
-    set: function(obj, silentOrCallback) {
-      var silent = _.isBoolean(silentOrCallback) && silentOrCallback === true;
-      if (!_.isUndefined(obj) && _.isObject(obj)) {
-        _.map(_.keys(obj), function(k) {
-          theModel[k] = obj[k];
-        });
-        if (!silent) fireCallbacks();
-        if (!silent)(silentOrCallback || function() {})();
-      }
-    },
+    set: set,
     replace: function(obj, silentOrCallback) {
       theModel = {};
-      this.set(obj, silentOrCallback);
+      set(obj, silentOrCallback);
     },
     remove: function(key) {
       delete theModel[key];
