@@ -766,7 +766,14 @@ module.exports = function stringifyDoc(ctx) {
 }
 
 },{"./common":1,"./utils":7}],7:[function(require,module,exports){
-var __idCounter = 0;
+(function (global){
+var globalObject = global || window || {};
+
+globalObject.__ElemInternals = globalObject.__ElemInternals || {};
+globalObject.__ElemInternals.Utils = globalObject.__ElemInternals.Utils || {};
+globalObject.__ElemInternals.Utils.__idCounter = globalObject.__ElemInternals.Utils.__idCounter || 0;
+
+//var __idCounter = 0;
 
 var escapeMap = {
     '&': '&amp;',
@@ -976,9 +983,9 @@ function contains(obj, target) {
 }
 
 function uniqueId(prefix) {
-    var id = ++__idCounter + '';
+    var id = ++globalObject.__ElemInternals.Utils.__idCounter + '';
     return prefix ? prefix + id : id;
-}  
+}
 
 function times(n, func) {
     var results = [];
@@ -1059,16 +1066,16 @@ function dasherize(what) {
         .toLowerCase().replace(/_/g, '-');
 }
 
-function startsWith(source, start) { 
-    return source.indexOf(start) === 0; 
+function startsWith(source, start) {
+    return source.indexOf(start) === 0;
 }
 
-function focus(elem) { 
+function focus(elem) {
     if (elem.focus) elem.focus();
 }
 
-function hasFocus(elem) { 
-    return elem === document.activeElement && (!document.hasFocus || document.hasFocus()) && !!(elem.type || elem.href || ~elem.tabIndex); 
+function hasFocus(elem) {
+    return elem === document.activeElement && (!document.hasFocus || document.hasFocus()) && !!(elem.type || elem.href || ~elem.tabIndex);
 }
 
 function on(node, types, callback) {
@@ -1097,6 +1104,29 @@ function off(node, types, callback) {
 
 function findNode(selector) {
     return document.querySelector(selector);
+}
+
+function keyMirror(obj, p) {
+    var prefix = p;
+    if (!prefix) {
+        prefix = '';
+    }
+    var ret = {};
+    var key;
+    if (!(obj instanceof Object && !Array.isArray(obj))) {
+        throw new Error('keyMirror(...): Argument must be an object.');
+    }
+    for (key in obj) {
+        if (!obj.hasOwnProperty(key)) {
+            continue;
+        }
+        if (obj[key] instanceof Object) {
+            ret[key] = keyMirror(obj[key], key + '.');
+        } else {
+            ret[key] = prefix + key;
+        }
+    }
+    return ret;
 }
 
 exports.escape = createEscaper(escapeMap, keys);
@@ -1138,6 +1168,9 @@ exports.negate = negate;
 exports.property = property;
 exports.identity = identity;
 exports.pairs = pairs;
+exports.keyMirror = keyMirror;
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{}],8:[function(require,module,exports){
 
 var EventBus = require('./events');

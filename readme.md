@@ -35,7 +35,6 @@ API
 * `Elem.style(obj)` : create an extendable set of CSS inline styles
 * `Elem.defer(function)` : Defers invoking the function until the current call stack has cleared, similar to using setTimeout with a delay of 0
 * `Elem.defered(function)` : return a function that cal Elem.defer(function)
-* `Elem.Utils` : a lot of utils function to deal with JavaScript structures. Similar to some underscore.js functions
 * `Elem.Perf` : performance measurement tools
   * `Elem.Perf.start` : enable performance measures
   * `Elem.Perf.stop` : disable performance measures
@@ -191,7 +190,8 @@ var Hello = Elem.component({
 });
 
 Hello({ name: "World" }).renderTo('#hello'); // render inside #hello div
-Hello({ name: "World" }, '#hello2'); // render inside #hello div
+Hello({ name: "World" }).renderToString();
+Hello({ name: "World" }).renderToStaticHtml();
 
 ```
 
@@ -258,7 +258,7 @@ But you can't render that stuff server side (isomorphic apps), right ?
 
 Actually you can and it's pretty easy.
 
-First you can use `Elem.renderToString` on any `Elem.el` node you want.
+First you can use `Elem.renderToString` or `Elem.renderToStaticHtml` on any `Elem.el` node you want.
 
 But you can also do the same on components, let's write a funny clock component;
 
@@ -317,7 +317,7 @@ on the client side, you just have to re-render the component at the same div dan
 What about webcomponents ?
 ----------------------------
 
-You can use an Elem component to create webcomponent. To do that, just write something like
+You can use an Elem component to create webcomponent. To do that, just write something like (don't forget the dash in the component name)
 
 ```javascript
 Elem.registerWebComponent('todo-list', {
