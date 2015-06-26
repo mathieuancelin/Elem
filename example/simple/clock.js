@@ -1,8 +1,7 @@
 var _ = Elem.Utils;
-var cssClass = Elem.cssClass;
 
-var Style = {
-  circle: cssClass({
+var Style = Elem.style({
+  circle: {
     borderRadius: '50%',
     width: '120px',
     height: '120px',
@@ -11,8 +10,8 @@ var Style = {
     background: 'white',
     border: '3px solid #61b2a7',
     position: 'relative',
-  }),
-  circleCentered: cssClass({
+  },
+  circleCentered: {
     position: 'absolute',
     top: '55%',
     left: '0px',
@@ -20,8 +19,8 @@ var Style = {
     textAlign: 'center',
     fontFamily: "'Montserrat',sans-serif",
     textShadow: '1px 1px 1px rgba(34, 34, 34, 0.5)'
-  }),
-  circleSecond: cssClass({
+  },
+  circleSecond: {
     width: '0',
     height: '0',
     position: 'absolute',
@@ -33,8 +32,8 @@ var Style = {
     '-webkit-transform-origin': '50% 100%',
     '-ms-transform-origin': '50% 100%',
     transformOrigin: '50% 100%'
-  }),
-  circleMinute: cssClass({
+  },
+  circleMinute: {
     width: '0',
     height: '0',
     position: 'absolute',
@@ -47,8 +46,8 @@ var Style = {
     '-webkit-transform-origin': '50% 100%',
     '-ms-transform-origin': '50% 100%',
     transformOrigin: '50% 100%'
-  }),
-  circleHour: cssClass({
+  },
+  circleHour: {
     width: '0',
     height: '0',
     position: 'absolute',
@@ -61,8 +60,8 @@ var Style = {
     '-webkit-transform-origin': '50% 100%',
     '-ms-transform-origin': '50% 100%',
     transformOrigin: '50% 100%'
-  }),
-  circleAfter: cssClass({
+  },
+  circleAfter: {
     position: 'absolute',
     top: '50%',
     left: '50%',
@@ -74,8 +73,8 @@ var Style = {
     content: "",
     background: '#61b2a7',
     display: 'block'
-  })
-};
+  }
+});
 
 var Clock = Elem.component({
   init: function(state, props) {

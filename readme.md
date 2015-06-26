@@ -3,7 +3,7 @@ Elem.js
 
 [![Join the chat at https://gitter.im/mathieuancelin/Elem](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/mathieuancelin/Elem?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-Simple and idiotic lib to build UI components. It's a templating library promoting functionnal composition with the full expressiveness of JavaScript and support for all existing JavaScript libraries. Elem.js is just a quick and dirty experiment to avoid string templates and string concat when modifying the DOM and does not care about performance at all (ie. recreate DOM nodes all the time). 
+Simple and idiotic lib to build UI components. It's a templating library promoting functionnal composition with the full expressiveness of JavaScript and support for all existing JavaScript libraries. Elem.js is just a quick and dirty experiment to avoid string templates and string concat when modifying the DOM and does not care about performance at all (ie. recreate DOM nodes all the time).
 
 Install
 -------
@@ -22,14 +22,21 @@ API
 * `Elem.vel(name, attributes)` : Create a representation of a void HTML element
 * `Elem.nbsp(times)` : creates a `<span>` containing one or more `&nbsp;`
 * `Elem.text(value)` : creates a `<span>value</span>`
-* `Elem.elements(elems...)` : creates an array or `Elem.el` based on function args
 * `Elem.render(elem, container)` : render an element to a container in the DOM
 * `Elem.renderToString(elem)` : render an element as an HTML string
+* `Elem.renderToStaticHtml(elem)` : render an element as a pure HTML string
 * `Elem.component(options)` : render a component and return its state. Return a factory function if opts does not contains a container. See the component section for options
-* `Elem.state(defaultValues)` : create a state object. Similar to Backbone models
+* `Elem.unmountComponent(node)` : unmount an Elem component at a given DOM node
+* `Elem.componentToString(options)` : render a component as an HTML string
 * `Elem.registerWebComponent(elemName, options)` : register a component as a webcomponent. See the webcomponent section for options.
+* `Elem.predicate(predicate, elem)` : return element if predicate is true or undefined if false. Predicate can be a function
+* `Elem.state(defaultValues)` : create a state object. Similar to Backbone models
+* `Elem.dispatcher()` : creates an event dispatcher
+* `Elem.style(obj)` : create an extendable set of CSS inline styles
+* `Elem.defer(function)` : Defers invoking the function until the current call stack has cleared, similar to using setTimeout with a delay of 0
+* `Elem.defered(function)` : return a function that cal Elem.defer(function)
 * `Elem.Utils` : a lot of utils function to deal with JavaScript structures. Similar to some underscore.js functions
-* `Elem.Perf` : performance measurement tools 
+* `Elem.Perf` : performance measurement tools
   * `Elem.Perf.start` : enable performance measures
   * `Elem.Perf.stop` : disable performance measures
   * `Elem.Perf.markStart(name)` : mark the start of a measure
@@ -52,7 +59,7 @@ var MyAwesomeNode = Elem.el('h1', 'Hello World!');
 Elem.render(MyAwesomeNode, '#container');
 ```
 
-Of course, you can build much more complicated nodes 
+Of course, you can build much more complicated nodes
 
 ```javascript
 var node = Elem.el('div', { className: 'col-md-6' }, [
@@ -68,12 +75,12 @@ Attributes use camel case shaped keys, so something like `backgroundColor` will 
 
 ```javascript
 var shouldDisplayDarkBackground = true;
-var shouldDisplayBrightBackground = !shouldDisplayDarkBackground; 
-Elem.el('div', { 
-  className: { 
-    withBackground: true, 
-    darkBackground: shouldDisplayDarkBackground, 
-    brighBackground: shouldDisplayBrightBackground 
+var shouldDisplayBrightBackground = !shouldDisplayDarkBackground;
+Elem.el('div', {
+  className: {
+    withBackground: true,
+    darkBackground: shouldDisplayDarkBackground,
+    brighBackground: shouldDisplayBrightBackground
   }
 }, 'Hello');
 ```
@@ -88,7 +95,7 @@ As children are just nodes in an array, it is really easy to add or remove eleme
 
 If you want to provide a child as HTML value, just pass an object like `{__asHtml: '&nbsp;;-)'}`.
 
-You can also attach callback to event on elements like 
+You can also attach callback to event on elements like
 
 ```javascript
 function saySomething() {
@@ -97,16 +104,16 @@ function saySomething() {
 
 var node = Elem.el('div', { className: 'col-md-6' }, [
   Elem.el('h3', 'Hello World!'),
-  Elem.el('button', { 
-      className: ['btn', 'btn-primary'], 
-      onclick: saySomething 
+  Elem.el('button', {
+      className: ['btn', 'btn-primary'],
+      onclick: saySomething
     }, 'Say something'),
   Elem.el('p', { style: { backgroundColor: 'red' } }, "Lorem ipsum ....")
 ]);
 Elem.render(MyAwesomeNode, '#container');
 ```
 
-And no, the output _WILL NOT BE_ 
+And no, the output _WILL NOT BE_
 
 ```html
 <div class="col-md-6">
@@ -126,18 +133,18 @@ but the following with an event listener on the root element of the component li
 </div>
 ```
 
-Supported events are 
+Supported events are
 
 ```
-wheel scroll touchcancel touchend touchmove touchstart click doubleclick 
-drag dragend dragenter dragexit dragleave dragover dragstart drop 
+wheel scroll touchcancel touchend touchmove touchstart click doubleclick
+drag dragend dragenter dragexit dragleave dragover dragstart drop
 change input submit focus blur keydown keypress keyup copy cut paste
 ```
 
 Can I create reusable components ?
 -----------------------------------
 
-Of course you can. You just need to to something like 
+Of course you can. You just need to to something like
 
 ```javascript
 var timer = Elem.component({
@@ -154,12 +161,12 @@ var timer = Elem.component({
 });
 ```
 
-when creating a component, you can define 
+when creating a component, you can define
 
 ```javascript
 {
     container: 'the container where the component will be rendered. Can be omitted to use it as a factory'
-    init: 'init function that receive the state and props as parameters' 
+    init: 'init function that receive the state and props as parameters'
     state: 'the state of the component. If undefined, an empty one will be created'
     props: 'properties for the component, can be passed at instanciation if factory mode'
     render: 'function that will return an Elem node'
@@ -175,7 +182,7 @@ You can use `Elem.component` as a component factory like :
 var Hello = Elem.component({
     // it's a factory because no container is provided
     render: function(state, props) {
-        return Elem.el('div', 
+        return Elem.el('div',
             [
                 Elem.el('h3', "Hello " + props.name + "!")
             ]
@@ -195,7 +202,7 @@ You can also use a component into a tree of elements by using a component factor
 var InnerComponent = Elem.component({
     // it's a factory because no container is provided
     render: function(state, props) {
-        return Elem.el('div', 
+        return Elem.el('div',
             [
                 Elem.el('h3', "Hello " + props.name + "!")
             ]
@@ -220,7 +227,7 @@ The `component(props)` function returns a function (if you don't provide a conta
 But, how can I get an actual DOM node from inside my component ?
 ---------------------------------------
 
-That's pretty easy, you just have to use refs. Refs give you access to any node inside your component that has been marked with a `ref` parameter. 
+That's pretty easy, you just have to use refs. Refs give you access to any node inside your component that has been marked with a `ref` parameter.
 
 ```javascript
 
@@ -232,9 +239,9 @@ function MyComponent(state, props, context) {
 
   return Elem.el('div', [
     Elem.el('input', { type: 'text', ref: 'myInputText', value: 'Hello World!' }, []),
-    Elem.el('button', 
-      { type: 'button', className: 'btn btn-primary', onclick: clickme }, 
-      'Click me !!!')    
+    Elem.el('button',
+      { type: 'button', className: 'btn btn-primary', onclick: clickme },
+      'Click me !!!')
   ]);
 }
 
@@ -249,7 +256,7 @@ You can also get the root DOM node by using `context.getDOMNode()`.
 But you can't render that stuff server side (isomorphic apps), right ?
 ---------------------------------------------
 
-Actually you can and it's pretty easy. 
+Actually you can and it's pretty easy.
 
 First you can use `Elem.renderToString` on any `Elem.el` node you want.
 
@@ -270,13 +277,13 @@ module.exports = Elem.component({
     },
     render: function(state, props) {
         return Elem.el('div', { className: 'circle'}, [
-                Elem.el('div', { className: 'hour', 
+                Elem.el('div', { className: 'hour',
                     style: { transform: 'rotate(' + state().hours + 'deg)' }}, ''),
-                Elem.el('div', { className: 'minute', 
+                Elem.el('div', { className: 'minute',
                     style: { transform: 'rotate(' + state().minutes + 'deg)' }}, ''),
-                Elem.el('div', { className: 'second', 
+                Elem.el('div', { className: 'second',
                     style: { transform: 'rotate(' + state().seconds + 'deg)' }}, ''),
-                Elem.el('span', { className: 'centered' }, 
+                Elem.el('span', { className: 'centered' },
                     moment().hours() + ' h ' + moment().minutes() + ' m ' + moment().seconds() + ' s')
             ]
         );
@@ -293,9 +300,9 @@ var Clock = require('./clock');
 
 app.get('/clock.html', function (req, res) {
   var clock = Clock(); // instanciate a component
-  res.send(clock.renderToString()); 
+  res.send(clock.renderToString());
   // or you can consider the following code for a pure html output
-  // clock.renderToStaticHtml 
+  // clock.renderToStaticHtml
 });
 
 var server = app.listen(3000, function () {
@@ -310,7 +317,7 @@ on the client side, you just have to re-render the component at the same div dan
 What about webcomponents ?
 ----------------------------
 
-You can use an Elem component to create webcomponent. To do that, just write something like 
+You can use an Elem component to create webcomponent. To do that, just write something like
 
 ```javascript
 Elem.registerWebComponent('todo-list', {
@@ -320,12 +327,16 @@ Elem.registerWebComponent('todo-list', {
         tasks: [],
         text: ''
       });
+      props.componentsBus.on('otherWebComponentClicked', function(evt) {
+        ...
+      });
+      props.componentsBus.trigger('todoListLoaded', { tasks: state().tasks });
     },
     render: TodoApp
 });
-``` 
+```
 
-and use it like 
+and use it like
 
 ```html
 <div>
@@ -337,7 +348,7 @@ when creating a webcomponent, you can define options like
 
 ```javascript
 {
-    init: 'init function that receive the state and props as parameters' 
+    init: 'init function that receive the state and props as parameters'
     state: 'the state of the webcomponent. If undefined, an empty one will be created'
     render: 'function that will return an Elem node'
 }
@@ -391,8 +402,8 @@ function NewTask(state, props) {
               ),
               Elem.el('div', { className: 'form-group' },
                   Elem.el('div', { className: 'btn-group' }, [
-                      Elem.el('button', { 
-                              type: 'button', 
+                      Elem.el('button', {
+                              type: 'button',
                               className: 'btn btn-success',
                               onclick: createNewTask
                           },
@@ -400,10 +411,10 @@ function NewTask(state, props) {
                               className: 'glyphicon glyphicon-floppy-saved'
                           }, [])
                       ),
-                      Elem.el('button', { 
+                      Elem.el('button', {
                               onclick: deleteAllDone,
-                              type: 'button', 
-                              className: 'btn btn-danger' 
+                              type: 'button',
+                              className: 'btn btn-danger'
                           },
                           Elem.el('span', { className: 'glyphicon glyphicon-trash' }, [])
                       )
@@ -411,7 +422,7 @@ function NewTask(state, props) {
               )
           ])]
       )
-  );    
+  );
 }
 
 function TaskItem(state, props) {
@@ -430,16 +441,16 @@ function TaskItem(state, props) {
       Elem.el('div', { className: 'row' }, [
           Elem.el('div', { className: 'col-md-10' }, props.task.name),
           Elem.el('div', { className: 'col-md-2' },
-              Elem.el('span', { 
-                  onclick: flipTaskState, 
-                  className: { 
-                      label: true, 
-                      labelSuccess: props.task.done, 
-                      labelDefault: !props.task.done 
-                  }, 
-                  style: { 
-                      cursor: 'pointer' 
-                  } 
+              Elem.el('span', {
+                  onclick: flipTaskState,
+                  className: {
+                      label: true,
+                      labelSuccess: props.task.done,
+                      labelDefault: !props.task.done
+                  },
+                  style: {
+                      cursor: 'pointer'
+                  }
               }, 'Done')
           )
       ])

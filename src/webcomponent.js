@@ -1,4 +1,6 @@
 
+var EventBus = require('./events');
+var Utils = require('./utils');
 var registrationFunction = undefined
 
 try {
@@ -6,6 +8,8 @@ try {
       if (window.console) console.error('[ELEMJS] No registerElement function, webcomponents will not work !!!');
   }).bind(document);
 } catch(e) {}
+
+var Bus = EventBus();
 
 function registerWebComponent(tag, elem) {
   var thatDoc = document;
@@ -26,6 +30,29 @@ function registerWebComponent(tag, elem) {
       shadowRoot.appendChild(node);
     }
     this._node = node;
+
+    this._id = Utils.uniqueId('WebComponent_');
+    this._internalBus = EventBus();
+    this._internalBus._trigger = this._internalBus.trigger;
+    this._internalBus.trigger = function(name, evt) {
+      Bus.trigger('ElemEvent', {
+        name: name,
+        id: this._id,
+        payload: evt
+      });
+    }.bind(this);
+
+    Bus.on('ElemEvent', function(evt) {
+      var from = evt.id;
+      if (from !== this._id) {
+        var name = evt.name;
+        var payload = evt.payload;  
+        this._internalBus._trigger(name, payload);
+      }
+    }.bind(this));
+
+    props.componentsBus = this._internalBus;
+
     if (props.renderOnly && props.renderOnly === true) {
       this.renderedElement = Elem.render(elem, node); 
     } else {

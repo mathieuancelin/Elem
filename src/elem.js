@@ -234,7 +234,7 @@ exports.renderToStaticHtml = function(el) {
     Common.markStart('Elem.renderToStaticHtml');
     var str = _.map(renderToNode(el, Stringifier({__noDataId: true})), function(n) { return n.toHtmlString(); }).join('');
     Common.markStop('Elem.renderToStaticHtml');
-    return str;   
+    return str;
 }
 
 exports.el = el;
@@ -246,8 +246,6 @@ exports.vel = function(name, attrs) { return el(name, attrs, []); }; // void nod
 exports.nbsp = function(times) { return el('span', { __asHtml: _.times(times || 1, function() { return '&nbsp;'; }) }); };
 
 exports.text = function(text) { return el('span', {}, text); };
-
-exports.elements = function() { return _.map(arguments, function(item) { return item; }); };
 
 exports.render = function(el, node, context) {
     Common.markStart('Elem.render');
@@ -309,13 +307,25 @@ exports.predicate = function(predicate, what) {
         }
     }
 };
-exports.p = exports.predicate;
-exports.cssClass = function(obj) {
-    return _.extend({}, {
+exports.style = function(obj) {
+    var result = {};
+    var keys = _.keys(obj);
+    _.each(keys, function(key) {
+        var clazz = obj[key];
+        if (_.isObject(clazz)) {
+            result[key] = _.extend({}, {
+                extend: function(o) {
+                    return _.extend({}, o, clazz);
+                }
+            }, clazz);
+        }
+    });
+    result.extend = _.extend({}, {
         extend: function(o) {
             return _.extend({}, o, obj);
         }
     }, obj);
+    return result;
 };
 
 Common.__internalAccess.api = exports;
