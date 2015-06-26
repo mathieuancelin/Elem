@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Demos</title>
+        <link rel="stylesheet" href="../css/bootstrap.min.css">
+    </head>
+    <body>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <test-pingpong name="ping"/>
+                </div>
+                <div class="col-md-6">
+                    <test-pingpong name="pong"/>
+                </div>
+            </div>
+        </div>
+        <script src="../../dist/elem.min.js" type="text/javascript"></script>
+        <script>
+            Elem.registerWebComponent('test-pingpong', {
+                init: function(state, props) {
+                    var name = props.name;
+                    var respondTo = name === 'ping' ? 'pong' : 'ping';
+                    props.componentsBus.on('pingpongevent', function(evt) {
+                        if (evt.type === 'ping') {
+                            state.set({
+                                message: 'PONG'
+                            });
+                            setTimeout(function() {
+                                state.set({
+                                    message: ''
+                                });
+                                props.componentsBus.trigger('pingpongevent', { type: 'pong' });
+                            }, 1000);
+                        } else {
+                            state.set({
+                                message: 'PING'
+                            });
+                            setTimeout(function() {
+                                state.set({
+                                    message: ''
+                                });
+                                props.componentsBus.trigger('pingpongevent', { type: 'ping' });
+                            }, 1000);
+                        }
+                    });
+                    state.set({
+                        message: ''
+                    }, true);
+                    if (name === 'ping') {
+                        setTimeout(function() {
+                            props.componentsBus.trigger('pingpongevent', { type: 'ping' });
+                        }, 0);
+                    }
+                },
+                render: function(s, p, c) {
+                  return Elem.el('div', s().message);
+                }
+            });
+        </script>
+    </body>
+</html>
