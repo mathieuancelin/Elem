@@ -1,55 +1,59 @@
 var _ = require('./utils');
 
+var globalObject = _.memoGobalObject();
+
 exports.debug = false;
 exports.perfs = false;
-exports.voidElements = ["AREA","BASE","BR","COL","COMMAND","EMBED","HR","IMG","INPUT","KEYGEN","LINK","META","PARAM","SOURCE","TRACK","WBR"];
-exports.events = ['wheel','scroll','touchcancel','touchend','touchmove','touchstart','click','doubleclick','drag','dragend','dragenter','dragexit','dragleave','dragover','dragstart','drop','change','input','submit','focus','blur','keydown','keypress','keyup','copy','cut','paste','mousedown','mouseenter','mouseleave','mousemove','mouseout','mouseover','mouseup'];
-    
+exports.voidElements = ["AREA", "BASE", "BR", "COL", "COMMAND", "EMBED", "HR", "IMG", "INPUT", "KEYGEN", "LINK", "META", "PARAM", "SOURCE", "TRACK", "WBR"];
+exports.events = ['wheel', 'scroll', 'touchcancel', 'touchend', 'touchmove', 'touchstart', 'click', 'doubleclick', 'drag', 'dragend', 'dragenter', 'dragexit', 'dragleave', 'dragover', 'dragstart', 'drop', 'change', 'input', 'submit', 'focus', 'blur', 'keydown', 'keypress', 'keyup', 'copy', 'cut', 'paste', 'mousedown', 'mouseenter', 'mouseleave', 'mousemove', 'mouseout', 'mouseover', 'mouseup'];
+
 // redraw with requestAnimationFrame (https://developer.mozilla.org/fr/docs/Web/API/window.requestAnimationFrame)
 // perfs measures (http://www.html5rocks.com/en/tutorials/webperformance/usertiming/)
 var Performances = {
   mark: function() {},
   measure: function() {},
-  getEntriesByName: function() { return []; },
-  getEntriesByType: function() { return []; },
+  getEntriesByName: function() {
+    return [];
+  },
+  getEntriesByType: function() {
+    return [];
+  },
   clearMarks: function() {},
   clearMeasures: function() {}
 };
 
-// Avoid some issues in non broser environments
-if (typeof window === 'undefined') {
-  window = {
+// Avoid some issues in non browser environments
+if (typeof globalObject === 'undefined') {
+  globalObject = {
     __fake: true
   };
 }
 // Avoid some issues in older browsers
-if (typeof window.console === 'undefined') {
-  window.console = {
+if (typeof globalObject.console === 'undefined') {
+  globalObject.console = {
     log: function() {},
     error: function() {},
     table: function() {},
     debug: function() {},
-    trace: function() {} 
+    trace: function() {}
   };
 }
 
-if (typeof window.performance !== 'undefined' 
-    && typeof window.performance.mark !== 'undefined' 
-    && typeof window.performance.measure !== 'undefined') {
-  Performances = window.performance;  
+if (typeof globalObject.performance !== 'undefined' && typeof globalObject.performance.mark !== 'undefined' && typeof globalObject.performance.measure !== 'undefined') {
+  Performances = globalObject.performance;
 }
 
-window.requestAnimationFrame = 
-    window.requestAnimationFrame || 
-    window.mozRequestAnimationFrame ||
-    window.webkitRequestAnimationFrame || 
-    window.msRequestAnimationFrame || 
-    (function() {
-        if (window.console) console.error('[ELEMJS] No requestAnimationFrame, using lame polyfill ...');
-        return function(callback, element){
-            window.setTimeout(callback, 1000 / 60);
-        }    
-    })();
+globalObject.requestAnimationFrame =
+  globalObject.requestAnimationFrame ||
+  globalObject.mozRequestAnimationFrame ||
+  globalObject.webkitRequestAnimationFrame ||
+  globalObject.msRequestAnimationFrame ||
+  (function() {
+    if (globalObject.console) console.error('[ELEMJS] No requestAnimationFrame, using lame polyfill ...');
+    return function(callback, element) {
+      globalObject.setTimeout(callback, 1000 / 60);
+    }
+  })();
 
 var ElemMeasureStart = 'ElemMeasureStart';
 var ElemMeasureStop = 'ElemMeasureStop';
@@ -93,35 +97,33 @@ exports.collectMeasures = function() {
 
 exports.printMeasures = function() {
   if (!exports.perfs) return;
-  if (window.console) console.table(exports.collectMeasures());
+  if (globalObject.console) console.table(exports.collectMeasures());
 };
 
 exports.defer = function(cb) {
-    window.requestAnimationFrame.call(window, cb);
+  globalObject.requestAnimationFrame.call(globalObject, cb);
 };
 
 exports.defered = function(cb) {
-    return function() {
-        exports.defer(cb);
-    };
+  return function() {
+    exports.defer(cb);
+  };
 };
 
 exports.__internalAccess = {};
 
 if (!Function.prototype.bind) {
-  if (window.console) console.error('[ELEMJS] No Function.prototype.bind, using polyfill ...');
-  Function.prototype.bind = function (oThis) {
+  if (globalObject.console) console.error('[ELEMJS] No Function.prototype.bind, using polyfill ...');
+  Function.prototype.bind = function(oThis) {
     if (typeof this !== "function") {
       throw new TypeError("Function.prototype.bind - can't call bounded element");
     }
     var aArgs = Array.prototype.slice.call(arguments, 1);
-    var fToBind = this; 
-    var fNOP = function () {};
-    var fBound = function () {
-        return fToBind.apply(this instanceof fNOP && oThis
-                 ? this
-                 : oThis,
-                 aArgs.concat(Array.prototype.slice.call(arguments)));
+    var fToBind = this;
+    var fNOP = function() {};
+    var fBound = function() {
+      return fToBind.apply(this instanceof fNOP && oThis ? this : oThis,
+        aArgs.concat(Array.prototype.slice.call(arguments)));
     };
     fNOP.prototype = this.prototype;
     fBound.prototype = new fNOP();

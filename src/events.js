@@ -18,8 +18,8 @@ module.exports = function() {
         } else if (callbackHash.name === name) {
           callbackHash.callback(event);
         }
-      });  
-    });    
+      });
+    });
   }
 
   return {
@@ -27,7 +27,10 @@ module.exports = function() {
     dispatch: fireCallbacks,
     on: function(name, callback) {
       this.off(name, callback);
-      callbacks.push({ name: name, callback: callback });
+      callbacks.push({
+        name: name,
+        callback: callback
+      });
     },
     off: function(name, callback) {
       callbacks = _.filter(callbacks, function(obj) {

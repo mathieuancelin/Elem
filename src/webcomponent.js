@@ -1,13 +1,12 @@
-
 var EventBus = require('./events');
 var Utils = require('./utils');
 var registrationFunction = undefined
 
 try {
   registrationFunction = (document.registerElement || document.register || function() {
-      if (window.console) console.error('[ELEMJS] No registerElement function, webcomponents will not work !!!');
+    if (window.console) console.error('[ELEMJS] No registerElement function, webcomponents will not work !!!');
   }).bind(document);
-} catch(e) {}
+} catch (e) {}
 
 var Bus = EventBus();
 
@@ -60,13 +59,15 @@ function registerWebComponent(tag, elem) {
         container: node,
         init: elem.init,
         render: elem.render,
-        defaultProps: function() { return props; },
+        defaultProps: function() {
+          return props;
+        },
         initialState: elem.initialState
       });
     }
   };
 
-  ElementProto.attributeChangedCallback = function (attr, oldVal, newVal) {
+  ElementProto.attributeChangedCallback = function(attr, oldVal, newVal) {
     this.props[attr] = newVal;
     var props = this.props;
     if (this.props.renderOnly && this.props.renderOnly === true) {
