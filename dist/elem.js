@@ -486,6 +486,8 @@ function attributesToArray(attrs) {
 }
 
 function el(name, attrs, children) {
+  var svg = attrs.__svg;
+  delete attrs.__svg;
   var nodeId = _.uniqueId('node_');
   if (_.isUndefined(children) && !_.isUndefined(attrs) && !attrs.__isAttrs) {
     children = attrs;
@@ -534,7 +536,12 @@ function el(name, attrs, children) {
     toHtmlNode: function(doc, context) {
       var elemName = this.name;
       extractEventHandlers(attrs, nodeId, context);
-      var element = doc.createElement(_.escape(name));
+      var element = undefined;
+      if (svg) {
+        element = doc.createElementNS("http://www.w3.org/2000/svg", _.escape(name));
+      } else {
+        element = doc.createElement(_.escape(name));
+      }
       _.each(attrsArray, function(item) {
         if (elemName && elemName === 'input' && item.key === 'value') {
           element.value = item.value;
@@ -634,6 +641,19 @@ exports.vel = function(name, attrs) {
   return el(name, attrs, []);
 }; // void node, cel(name, attrs)
 
+exports.svg = function(name, attrs, children) {
+  attrs.__svg = true;
+  if (!children) {
+    return el(name, {}, attrs);
+  }
+  return el(name, attrs, children);
+};
+
+exports.vsvg = function(name, attrs) {
+  attrs.__svg = true;
+  return el(name, attrs, []);
+};
+
 exports.nbsp = function(times) {
   return el('span', {
     __asHtml: _.times(times || 1, function() {
@@ -721,7 +741,7 @@ exports.predicate = function(predicate, what) {
 exports.style = function(obj) {
   var result = {};
   var keys = _.keys(obj);
-  _.each(keys, function(key)  {
+  _.each(keys, function(key) {
     var clazz = obj[key];
     if (_.isObject(clazz)) {
       result[key] = _.extend({}, {
