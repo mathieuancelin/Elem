@@ -6,6 +6,8 @@ var registerWebComponent = require('./webcomponent').registerWebComponent;
 var Stringifier = require('./stringify');
 var Dispatcher = require('./events');
 
+exports.svgNS = "http://www.w3.org/2000/svg";
+
 function styleToString(attrs) {
   if (_.isUndefined(attrs)) return '';
   var attrsArray = _.map(_.keys(attrs), function(key) {
@@ -116,8 +118,8 @@ function attributesToArray(attrs) {
 }
 
 function el(name, attrs, children) {
-  var svg = attrs.__svg;
-  delete attrs.__svg;
+  var svg = attrs.namespace;
+  delete attrs.namespace;
   var nodeId = _.uniqueId('node_');
   if (_.isUndefined(children) && !_.isUndefined(attrs) && !attrs.__isAttrs) {
     children = attrs;
@@ -168,7 +170,7 @@ function el(name, attrs, children) {
       extractEventHandlers(attrs, nodeId, context);
       var element = undefined;
       if (svg) {
-        element = doc.createElementNS("http://www.w3.org/2000/svg", _.escape(name));
+        element = doc.createElementNS(svg, _.escape(name));
       } else {
         element = doc.createElement(_.escape(name));
       }
@@ -272,7 +274,7 @@ exports.vel = function(name, attrs) {
 }; // void node, cel(name, attrs)
 
 exports.svg = function(name, attrs, children) {
-  attrs.__svg = true;
+  attrs.namespace = exports.svgNS;
   if (!children) {
     return el(name, {}, attrs);
   }
@@ -280,7 +282,7 @@ exports.svg = function(name, attrs, children) {
 };
 
 exports.vsvg = function(name, attrs) {
-  attrs.__svg = true;
+  attrs.namespace = exports.svgNS;
   return el(name, attrs, []);
 };
 

@@ -16,18 +16,18 @@
         <script src="../../dist/elem.js" type="text/javascript"></script>
         <script type="text/javascript">
 
-          function test() {
-            return Elem.svg('svg', { xmlns: "http://www.w3.org/2000/svg", version: "1.1", width: "300", height: "200" }, [
-              Elem.svg('title', 'Exemple simple de figure SVG'),
-              Elem.svg('desc', "Cette figure est constituée d'un rectangle, d'un segment de droite et d'un cercle."),
+          function svg() {
+            return Elem.svg('svg', { xmlns: Elem.svgNS, version: "1.1", width: "300", height: "200" }, [
+              Elem.svg('title', 'Simple SVG pict'),
+              Elem.svg('desc', "A rectangle, a line and a circle"),
               Elem.vsvg('rect', { width: 100, height: 80, x: 0, y: 70, fill: "green" }),
               Elem.vsvg('line', { x1: "5", y1: "5", x2: "250", y2: "95", stroke: "red" }),
               Elem.vsvg('circle', { cx: "90", cy: "80", r: "50", fill: "blue" }),
-              Elem.svg('text', { x: "180", y: "60" }, 'Un texte')
+              Elem.svg('text', { x: "180", y: "60" }, 'A text')
             ]);
           }
 
-          Elem.render(test, document.getElementById("svg"));
+          Elem.render(svg, document.getElementById("svg"));
         </script>
     </body>
 </html>

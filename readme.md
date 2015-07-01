@@ -20,6 +20,8 @@ API
 * `Elem.el(name, attributes, children)` : Create a representation of an HTML element. Children can be a string/number/boolean, an `Elem.el`, an array of `Elem.el` or a `__asHtml` object.
 * `Elem.sel(name, children)` : Create a representation of a simple HTML element
 * `Elem.vel(name, attributes)` : Create a representation of a void HTML element
+* `Elem.svg(name, attributes, children)` : Create a representation of a simple SVG element
+* `Elem.vsvg(name, attributes)` : Create a representation of a void SVG element
 * `Elem.nbsp(times)` : creates a `<span>` containing one or more `&nbsp;`
 * `Elem.text(value)` : creates a `<span>value</span>`
 * `Elem.render(elem, container)` : render an element to a container in the DOM
@@ -138,6 +140,25 @@ Supported events are
 wheel scroll touchcancel touchend touchmove touchstart click doubleclick
 drag dragend dragenter dragexit dragleave dragover dragstart drop
 change input submit focus blur keydown keypress keyup copy cut paste
+```
+
+SVG
+-------
+
+You can also simply use SVG with Elem.js, using the dedicated API :
+
+```javascript
+function svg() {
+  return Elem.svg('svg', { xmlns: Elem.svgNS, version: "1.1", width: "300", height: "200" }, [
+    Elem.svg('title', 'Simple SVG pict'),
+    Elem.svg('desc', "A rectangle, a line and a circle"),
+    Elem.vsvg('rect', { width: 100, height: 80, x: 0, y: 70, fill: "green" }),
+    Elem.vsvg('line', { x1: "5", y1: "5", x2: "250", y2: "95", stroke: "red" }),
+    Elem.vsvg('circle', { cx: "90", cy: "80", r: "50", fill: "blue" }),
+    Elem.svg('text', { x: "180", y: "60" }, 'A text')
+  ]);
+}
+Elem.render(svg, document.getElementById("svg"));
 ```
 
 Can I create reusable components ?
