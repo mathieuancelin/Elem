@@ -442,7 +442,7 @@ function extractEventHandlers(attrs, nodeId, context) {
         context.waitingHandlers.push({
           root: context.root,
           id: nodeId,
-          event: keyName,
+          event: keyName.toLowerCase(),
           callback: attrs[key]
         });
       }
@@ -1372,22 +1372,25 @@ function registerWebComponent(tag, elem) {
   var ElementProto = Object.create(HTMLElement.prototype);
 
   ElementProto.createdCallback = function() {
+    var elemInstance = Utils.extend({}, elem);
+    this._id = Utils.uniqueId('WebComponent_');
     var props = {};
     for (var i in this.attributes) {
       var item = this.attributes[i];
       props[item.name] = item.value;
     }
     this.props = props;
-    var node = this;
-    if (props.noshadow !== 'true') {
+    var theNode = undefined;
+    theNode = thatDoc.createElement('content');
+    theNode.setAttribute('class', 'elemcomponent');
+    theNode.setAttribute('id', this._id);
+    if (props.shadow) {
       var shadowRoot = this.createShadowRoot();
-      node = thatDoc.createElement('div');
-      node.setAttribute('class', 'elemcomponent');
-      shadowRoot.appendChild(node);
+      shadowRoot.appendChild(theNode);
+    } else {
+      this.appendChild(theNode);
     }
-    this._node = node;
-
-    this._id = Utils.uniqueId('WebComponent_');
+    this._theNode = theNode;
     this._internalBus = EventBus();
     this._internalBus._trigger = this._internalBus.trigger;
     this._internalBus.trigger = function(name, evt) {
@@ -1410,32 +1413,33 @@ function registerWebComponent(tag, elem) {
     props.componentsBus = this._internalBus;
 
     if (props.renderOnly && props.renderOnly === true) {
-      this.renderedElement = Elem.render(elem, node);
+      this.renderedElement = Elem.render(elemInstance, node);
     } else {
       this.renderedElement = Elem.component({
-        container: node,
-        init: elem.init,
-        render: elem.render,
+        container: theNode,
+        init: elemInstance.init,
+        render: elemInstance.render,
         defaultProps: function() {
           return props;
         },
-        initialState: elem.initialState
+        initialState: elemInstance.initialState
       });
     }
   };
 
   ElementProto.attributeChangedCallback = function(attr, oldVal, newVal) {
+    var elemInstance = Utils.extend({}, elem);
     this.props[attr] = newVal;
     var props = this.props;
     if (this.props.renderOnly && this.props.renderOnly === true) {
-      this.renderedElement = Elem.render(elem, this._node);
+      this.renderedElement = Elem.render(elemInstance, this._node);
     } else {
       this.renderedElement = Elem.component({
         container: this._node,
-        init: elem.init,
-        render: elem.render,
+        init: elemInstance.init,
+        render: elemInstance.render,
         props: props,
-        state: elem.state
+        state: elemInstance.state
       });
     }
   };
