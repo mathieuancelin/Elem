@@ -72,7 +72,7 @@ function extractEventHandlers(attrs, nodeId, context) {
         context.waitingHandlers.push({
           root: context.root,
           id: nodeId,
-          event: keyName,
+          event: keyName.toLowerCase(),
           callback: attrs[key]
         });
       }
