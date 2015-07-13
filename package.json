@@ -17,6 +17,8 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "incremental-dom": "^0.1.0",
+    "virtual-dom": "^2.0.1"
   },
   "devDependencies": {
     "watchify": "2.1.1",

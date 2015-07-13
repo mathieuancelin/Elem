@@ -244,6 +244,7 @@ Elem.component({
     init: function() {
       var that = this;
       commonState.onChange(function() {
+        console.log('got an event');
         that.replaceState(commonState.all());
       });
     },
@@ -271,13 +272,16 @@ var Clock = Elem.component({
         var seconds = (state().seconds % 60);
         var minutes = (state().minutes % 60);
         var hours = (state().hours % 12);
-        return Elem.el('div', { className: 'circle'}, [
+        return Elem.el('div', [
+            Elem.el('button', { type: 'button', onclick: function() { console.log('yoooo'); }}, "yo"),
+            Elem.el('div', { className: 'circle'}, [
                 Elem.el('div', { className: 'hour', style: { transform: 'rotate(' + (hours * 30) + 'deg)' }}, ''),
                 Elem.el('div', { className: 'minute', style: { transform: 'rotate(' + (minutes * 6) + 'deg)' }}, ''),
                 Elem.el('div', { className: 'second', style: { transform: 'rotate(' + (seconds * 6) + 'deg)' }}, ''),
                 Elem.el('span', { className: 'centered' }, state().hours + ' h ' + state().minutes + ' m ' + state().seconds + ' s')
-            ]
-        );
+            ])
+          ]);
+
     }
 });
 

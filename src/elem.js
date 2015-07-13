@@ -3,7 +3,7 @@ var _ = require('./utils');
 var Components = require('./component');
 var state = require('./state');
 var registerWebComponent = require('./webcomponent').registerWebComponent;
-var Stringifier = require('./stringify');
+var Stringifier = require('./output/stringify');
 var Dispatcher = require('./events');
 
 exports.svgNS = "http://www.w3.org/2000/svg";
@@ -161,27 +161,15 @@ function el(name, attrs, children) {
     children: children,
     isElement: true,
     nodeId: nodeId,
-    toJsonString: function(pretty) {
-      if (pretty) return JSON.stringify(this, null, 2);
-      return JSON.stringify(this);
-    },
-    toHtmlNode: function(doc, context) {
+    outputWith: function(doc, context) {
       var elemName = this.name;
       extractEventHandlers(attrs, nodeId, context);
       var element = undefined;
       if (svg) {
-        element = doc.createElementNS(svg, _.escape(name));
+        element = doc.createElementNS(svg, _.escape(name), attrsArray);
       } else {
-        element = doc.createElement(_.escape(name));
+        element = doc.createElement(_.escape(name), attrsArray);
       }
-      _.each(attrsArray, function(item) {
-        if (elemName && elemName === 'input' && item.key === 'value') {
-          element.value = item.value;
-        } else {
-          element.setAttribute(item.key, item.value);
-        }
-      });
-
       function appendSingleNode(__children, __element) {
         if (_.isNumber(__children)) {
           __element.appendChild(doc.createTextNode(__children + ''));
@@ -190,13 +178,12 @@ function el(name, attrs, children) {
         } else if (_.isBoolean(__children)) {
           __element.appendChild(doc.createTextNode(__children + ''));
         } else if (_.isObject(__children) && __children.isElement) {
-          __element.appendChild(__children.toHtmlNode(doc, context));
+          __element.appendChild(__children.outputWith(doc, context));
         } else if (_.isObject(__children) && __children.__asHtml) {
           __element.innerHTML = __children.__asHtml;
         } else if (__children.__componentFactory) {
           var compId = _.escape(_.uniqueId('component_'));
-          var span = doc.createElement('span');
-          span.setAttribute('data-componentid', compId);
+          var span = doc.createElement('span', [{ key: 'data-componentid', value: compId }]);
           __element.appendChild(span);
           context.__innerComponents.push('[data-componentid="' + compId + '"]');
           __children.renderTo('[data-componentid="' + compId + '"]', true);
@@ -219,46 +206,44 @@ function el(name, attrs, children) {
 }
 
 function renderToNode(el, doc, context) {
-  if (_.isFunction(el)) el = el((context || {
-    props: {}
-  }).props)
+  if (_.isFunction(el)) el = el((context || { props: {}}).props);
   if (!_.isUndefined(el)) {
-    if (_.isArray(el)) {
-      return _.chain(el).map(function(item) {
-        if (_.isFunction(item)) {
-          return item();
-        } else {
-          return item;
-        }
-      }).filter(function(item) {
-        return !_.isUndefined(item);
-      }).map(function(item) {
-        return item.toHtmlNode(doc, context);
-      }).value();
-    } else {
-      return [el.toHtmlNode(doc, context)];
-    }
-  } else {
-    return [];
+    return el.outputWith(doc, context);
   }
+  return {
+    render: function() {
+      throw new Error("Your element is undefined");
+    }
+  };
 }
+var JsonOutput = require('./output/output');
+
+exports.renderToJson = function(el, context) {
+  Common.markStart('Elem.renderToJson');
+  var output = JsonOutput(context);
+  var json = renderToNode(el, output).render();
+  Common.markStop('Elem.renderToJson');
+  return json;
+};
+
+exports.renderToJsonString = function(el, context, pretty) {
+  if (pretty) {
+    return Json.stringify(exports.renderToJson(el, context), null, 2);
+  }
+  return Json.stringify(exports.renderToJson(el, context));
+};
 
 exports.renderToString = function(el, context) {
   Common.markStart('Elem.renderToString');
-  var str = _.map(renderToNode(el, Stringifier(context)), function(n) {
-    return n.toHtmlString();
-  }).join('');
+  var output = Stringifier(context);
+  var str = renderToNode(el, output).render();
   Common.markStop('Elem.renderToString');
   return str;
 };
 
 exports.renderToStaticHtml = function(el) {
   Common.markStart('Elem.renderToStaticHtml');
-  var str = _.map(renderToNode(el, Stringifier({
-    __noDataId: true
-  })), function(n) {
-    return n.toHtmlString();
-  }).join('');
+  var str = renderToNode(el, Stringifier({ __noDataId: true })).render();
   Common.markStop('Elem.renderToStaticHtml');
   return str;
 }
@@ -298,9 +283,48 @@ exports.text = function(text) {
   return el('span', {}, text);
 };
 
+exports.renderWith = function(el) {
+  Common.markStart('Elem.renderWith');
+  var output = {};
+  var context = {};
+  if (arguments.length === 2) {
+    output = arguments[1];
+  }
+  if (arguments.length === 3) {
+    context = arguments[1];
+    output = arguments[2];
+  }
+  context = context || {};
+  var waitingHandlers = context.waitingHandlers || [];
+  var refs = context.refs || {};
+  var props = context.props || {};
+  var __innerComponents = context.__innerComponents || [];
+
+  var node = renderToNode(el, output, {
+    waitingHandlers: waitingHandlers,
+    refs: refs,
+    props: props,
+    __innerComponents: __innerComponents
+  });
+  // need to find another place for that
+  if (!context.__rootListener) { // external listener here
+    _.each(waitingHandlers, function(handler) { // handler on each concerned node
+      console.log('reg on [data-nodeid="' + handler.id + '"] of types ' + handler.event.replace('on', ''));
+      _.on('[data-nodeid="' + handler.id + '"]', [handler.event.replace('on', '')], function() {
+        console.log('event on [data-nodeid="' + handler.id + '"] of type ' + handler.event);
+        handler.callback.apply({}, arguments);
+      });
+    });
+  }
+  Common.markStop('Elem.renderWith');
+  return node;
+};
+
+var DOMOuput = require('./output/incrementaldom');
+
 exports.render = function(el, node, context) {
   Common.markStart('Elem.render');
-  var waitingHandlers = (context || {}).waitingHandlers || [];
+  /*var waitingHandlers = (context || {}).waitingHandlers || [];
   var refs = (context || {}).refs || {};
   var props = (context || {}).props || {};
   var __innerComponents = (context || {}).__innerComponents || [];
@@ -332,7 +356,9 @@ exports.render = function(el, node, context) {
         });
       });
     }
-  }
+  }*/
+  var output = DOMOuput(context);
+  exports.renderWith(el, context, output).render(node);
   Common.markStop('Elem.render');
 };
 exports.unmountComponent = Components.unmountComponent;
