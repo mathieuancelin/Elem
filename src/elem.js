@@ -299,64 +299,27 @@ exports.renderWith = function(el) {
   var refs = context.refs || {};
   var props = context.props || {};
   var __innerComponents = context.__innerComponents || [];
+  var __rootListener = context.__rootListener || false;
 
-  var node = renderToNode(el, output, {
+  var renderContext = {
     waitingHandlers: waitingHandlers,
     refs: refs,
     props: props,
+    __rootListener: __rootListener,
     __innerComponents: __innerComponents
-  });
-  // need to find another place for that
-  if (!context.__rootListener) { // external listener here
-    _.each(waitingHandlers, function(handler) { // handler on each concerned node
-      console.log('reg on [data-nodeid="' + handler.id + '"] of types ' + handler.event.replace('on', ''));
-      _.on('[data-nodeid="' + handler.id + '"]', [handler.event.replace('on', '')], function() {
-        console.log('event on [data-nodeid="' + handler.id + '"] of type ' + handler.event);
-        handler.callback.apply({}, arguments);
-      });
-    });
-  }
+  };
+  output.setRenderContext(renderContext);
+  var node = renderToNode(el, output, renderContext);
   Common.markStop('Elem.renderWith');
   return node;
 };
 
-var DOMOuput = require('./output/incrementaldom');
+//var DOMOuput = require('./output/dom');
+//var DOMOuput = require('./output/incrementaldom');
+var DOMOuput = require('./output/virtualdom');
 
 exports.render = function(el, node, context) {
   Common.markStart('Elem.render');
-  /*var waitingHandlers = (context || {}).waitingHandlers || [];
-  var refs = (context || {}).refs || {};
-  var props = (context || {}).props || {};
-  var __innerComponents = (context || {}).__innerComponents || [];
-  var doc = document;
-  if (node.ownerDocument) {
-    doc = node.ownerDocument;
-  }
-  if (_.isString(node)) {
-    node = doc.querySelector(node);
-  }
-  if (!_.isUndefined(node) && !_.isNull(node)) {
-    var htmlNode = renderToNode(el, doc, {
-      root: node,
-      waitingHandlers: waitingHandlers,
-      refs: refs,
-      props: props,
-      __innerComponents: __innerComponents
-    });
-    while (!_.isUndefined(node) && !_.isNull(node) && node.firstChild) {
-      node.removeChild(node.firstChild);
-    }
-    _.each(htmlNode, function(n) {
-      if (!_.isUndefined(node) && !_.isNull(node)) node.appendChild(n);
-    });
-    if (!(context && context.__rootListener)) { // external listener here
-      _.each(waitingHandlers, function(handler) { // handler on each concerned node
-        _.on('[data-nodeid="' + handler.id + '"]', [handler.event.replace('on', '')], function() {
-          handler.callback.apply({}, arguments);
-        });
-      });
-    }
-  }*/
   var output = DOMOuput(context);
   exports.renderWith(el, context, output).render(node);
   Common.markStop('Elem.render');

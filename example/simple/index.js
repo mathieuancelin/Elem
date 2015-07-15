@@ -119,6 +119,7 @@ function NewTask(state, props, comp) {
 
 function TaskItem(state, props, comp) {
     function flipTaskState() {
+        console.log('tasks ', state().tasks);
         var tasks = _.map(state().tasks, function(item) {
             if (props.task._id === item._id) {
                 var newTask = _.clone(item);
@@ -127,9 +128,10 @@ function TaskItem(state, props, comp) {
             }
             return item;
         });
-        state.set({tasks: tasks});
+        console.log('new tasks ', tasks);
+        state.set({ tasks: tasks });
     }
-    return Elem.el('li', { className: 'list-group-item' },
+    return Elem.el('li', { className: 'list-group-item', key: props.task._id },
         Elem.el('div', { className: 'row' }, [
             Elem.el('div', { className: 'col-md-10' }, props.task.name),
             Elem.el('div', { className: 'col-md-2' },
@@ -244,7 +246,6 @@ Elem.component({
     init: function() {
       var that = this;
       commonState.onChange(function() {
-        console.log('got an event');
         that.replaceState(commonState.all());
       });
     },

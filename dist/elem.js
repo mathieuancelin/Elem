@@ -1,1232 +1,1225 @@
 !function(e){if("object"==typeof exports&&"undefined"!=typeof module)module.exports=e();else if("function"==typeof define&&define.amd)define([],e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.Elem=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-// shim for using process in browser
-
-var process = module.exports = {};
-
-process.nextTick = (function () {
-    var canSetImmediate = typeof window !== 'undefined'
-    && window.setImmediate;
-    var canMutationObserver = typeof window !== 'undefined'
-    && window.MutationObserver;
-    var canPost = typeof window !== 'undefined'
-    && window.postMessage && window.addEventListener
-    ;
-
-    if (canSetImmediate) {
-        return function (f) { return window.setImmediate(f) };
-    }
-
-    var queue = [];
-
-    if (canMutationObserver) {
-        var hiddenDiv = document.createElement("div");
-        var observer = new MutationObserver(function () {
-            var queueList = queue.slice();
-            queue.length = 0;
-            queueList.forEach(function (fn) {
-                fn();
-            });
-        });
-
-        observer.observe(hiddenDiv, { attributes: true });
-
-        return function nextTick(fn) {
-            if (!queue.length) {
-                hiddenDiv.setAttribute('yes', 'no');
-            }
-            queue.push(fn);
-        };
-    }
-
-    if (canPost) {
-        window.addEventListener('message', function (ev) {
-            var source = ev.source;
-            if ((source === window || source === null) && ev.data === 'process-tick') {
-                ev.stopPropagation();
-                if (queue.length > 0) {
-                    var fn = queue.shift();
-                    fn();
-                }
-            }
-        }, true);
-
-        return function nextTick(fn) {
-            queue.push(fn);
-            window.postMessage('process-tick', '*');
-        };
-    }
-
-    return function nextTick(fn) {
-        setTimeout(fn, 0);
-    };
-})();
-
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-// TODO(shtylman)
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
 
 },{}],2:[function(require,module,exports){
-/**
- * @license
- * Copyright 2015 The Incremental DOM Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS-IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+var createElement = require("./vdom/create-element.js")
 
-var patch = require('./src/patch').patch;
-var elements = require('./src/virtual_elements');
+module.exports = createElement
 
-module.exports = {
-  patch: patch,
-  elementVoid: elements.elementVoid,
-  elementOpenStart: elements.elementOpenStart,
-  elementOpenEnd: elements.elementOpenEnd,
-  elementOpen: elements.elementOpen,
-  elementClose: elements.elementClose,
-  text: elements.text,
-  attr: elements.attr
-};
+},{"./vdom/create-element.js":9}],3:[function(require,module,exports){
+var diff = require("./vtree/diff.js")
 
+module.exports = diff
 
-},{"./src/patch":7,"./src/virtual_elements":10}],3:[function(require,module,exports){
-/**
- * Copyright 2015 The Incremental DOM Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS-IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+},{"./vtree/diff.js":25}],4:[function(require,module,exports){
+(function (global){
+var topLevel = typeof global !== 'undefined' ? global :
+    typeof window !== 'undefined' ? window : {}
+var minDoc = require('min-document');
 
-var nodes = require('./nodes'),
-    createNode = nodes.createNode,
-    getKey = nodes.getKey,
-    getNodeName = nodes.getNodeName,
-    getChild = nodes.getChild,
-    registerChild = nodes.registerChild;
-var markVisited = require('./traversal').markVisited;
-var getWalker = require('./walker').getWalker;
+if (typeof document !== 'undefined') {
+    module.exports = document;
+} else {
+    var doccy = topLevel['__GLOBAL_DOCUMENT_CACHE@4'];
 
-
-/**
- * Checks whether or not a given node matches the specified nodeName and key.
- *
- * @param {?Node} node An HTML node, typically an HTMLElement or Text.
- * @param {?string} nodeName The nodeName for this node.
- * @param {?string} key An optional key that identifies a node.
- * @return {boolean} True if the node matches, false otherwise.
- */
-var matches = function(node, nodeName, key) {
-  return node &&
-         key === getKey(node) &&
-         nodeName === getNodeName(node);
-};
-
-
-/**
- * Aligns the virtual Element definition with the actual DOM, moving the
- * corresponding DOM node to the correct location or creating it if necessary.
- * @param {?string} nodeName For an Element, this should be a valid tag string.
- *     For a Text, this should be #text.
- * @param {?string} key The key used to identify this element.
- * @param {?Array<*>|string} statics For an Element, this should be an array of
- *     name-value pairs. For a Text, this should be the text content of the
- *     node.
- * @return {!Node} The matching node.
- */
-var alignWithDOM = function(nodeName, key, statics) {
-  var walker = getWalker();
-  var currentNode = walker.currentNode;
-  var parent = walker.getCurrentParent();
-  var matchingNode;
-
-  // Check to see if we have a node to reuse
-  if (matches(currentNode, nodeName, key)) {
-    matchingNode = currentNode;
-  } else {
-    var existingNode = key && getChild(parent, key);
-
-    // Check to see if the node has moved within the parent or if a new one
-    // should be created
-    if (existingNode) {
-      matchingNode = existingNode;
-    } else {
-      matchingNode = createNode(walker.doc, nodeName, key, statics);
-      registerChild(parent, key, matchingNode);
+    if (!doccy) {
+        doccy = topLevel['__GLOBAL_DOCUMENT_CACHE@4'] = minDoc;
     }
 
-    parent.insertBefore(matchingNode, currentNode);
-    walker.currentNode = matchingNode;
-  }
-
-  markVisited(parent, matchingNode);
-
-  return matchingNode;
-};
-
-
-/** */
-module.exports = {
-  alignWithDOM: alignWithDOM
-};
-
-
-},{"./nodes":6,"./traversal":8,"./walker":11}],4:[function(require,module,exports){
-/**
- * Copyright 2015 The Incremental DOM Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS-IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-var getData = require('./node_data').getData;
-
-
-/**
- * Applies an attribute or property to a given Element. If the value is a object
- * or a function (which includes null), it is set as a property on the Element.
- * Otherwise, the value is set as an attribute.
- * @param {!Element} el
- * @param {string} name The attribute's name.
- * @param {*} value The attribute's value. If the value is a string, it is set
- *     as an HTML attribute, otherwise, it is set on node.
- */
-var applyAttr = function(el, name, value) {
-  var data = getData(el);
-  var attrs = data.attrs;
-
-  if (attrs[name] === value) {
-    return;
-  }
-
-  var type = typeof value;
-
-  if (value === undefined) {
-    el.removeAttribute(name);
-  } else if (type === 'object' || type === 'function') {
-    el[name] = value;
-  } else {
-    el.setAttribute(name, value);
-  }
-
-  attrs[name] = value;
-};
-
-
-/**
- * Applies a style to an Element. No vendor prefix expansion is done for
- * property names/values.
- * @param {!Element} el
- * @param {string|Object<string,string>} style The style to set. Either a string
- *     of css or an object containing property-value pairs.
- */
-var applyStyle = function(el, style) {
-  if (typeof style === 'string' || style instanceof String) {
-    el.style.cssText = style;
-  } else {
-    el.style.cssText = '';
-
-    for (var prop in style) {
-      el.style[prop] = style[prop];
-    }
-  }
-};
-
-
-/**
- * Updates a single attribute on an Element. For some types (e.g. id or class),
- * the value is applied directly to the Element using the corresponding accessor
- * function.
- * @param {!Element} el
- * @param {string} name The attribute's name.
- * @param {*} value The attribute's value. If the value is a string, it is set
- *     as an HTML attribute, otherwise, it is set on node.
- */
-var updateAttribute = function(el, name, value) {
-  switch (name) {
-    case 'id':
-      el.id = value;
-      break;
-    case 'class':
-      el.className = value;
-      break;
-    case 'tabindex':
-      el.tabIndex = value;
-      break;
-    case 'style':
-      applyStyle(el, value);
-      break;
-    default:
-      applyAttr(el, name, value);
-      break;
-  }
-};
-
-
-/** */
-module.exports = {
-  updateAttribute: updateAttribute
-};
-
-
-},{"./node_data":5}],5:[function(require,module,exports){
-/**
- * Copyright 2015 The Incremental DOM Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS-IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-
-/**
- * Keeps track of information needed to perform diffs for a given DOM node.
- * @param {?string} nodeName
- * @param {?string} key
- * @constructor
- */
-function NodeData(nodeName, key) {
-  /**
-   * The attributes and their values.
-   * @const
-   */
-  this.attrs = {};
-
-  /**
-   * An array of attribute name/value pairs, used for quickly diffing the
-   * incomming attributes to see if the DOM node's attributes need to be
-   * updated.
-   * @const {Array<*>}
-   */
-  this.attrsArr = [];
-
-  /**
-   * The incoming attributes for this Node, before they are updated.
-   * @const {!Object<string, *>}
-   */
-  this.newAttrs = {};
-
-  /**
-   * The key used to identify this node, used to preserve DOM nodes when they
-   * move within their parent.
-   * @const
-   */
-  this.key = key;
-
-  /**
-   * Keeps track of children within this node by their key.
-   * {?Object<string, Node>}
-   */
-  this.keyMap = null;
-
-  /**
-   * The last child to have been visited within the current pass.
-   * {?Node}
-   */
-  this.lastVisitedChild = null;
-
-  /**
-   * The node name for this node.
-   * @const
-   */
-  this.nodeName = nodeName;
-
-  /**
-   * @const {string}
-   */
-  this.text = null;
+    module.exports = doccy;
 }
 
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"min-document":1}],5:[function(require,module,exports){
+"use strict";
 
-/**
- * Initializes a NodeData object for a Node.
- *
- * @param {!Node} node The node to initialze data for.
- * @param {string} nodeName The node name of node.
- * @param {?string} key The key that identifies the node.
- * @return {!NodeData} The newly initialized data object
- */
-var initData = function(node, nodeName, key) {
-  var data = new NodeData(nodeName, key);
-  node['__incrementalDOMData'] = data;
-  return data;
+module.exports = function isObject(x) {
+	return typeof x === "object" && x !== null;
 };
-
-
-/**
- * Retrieves the NodeData object for a Node, creating it if necessary.
- *
- * @param {!Node} node The node to retrieve the data for.
- * @return {NodeData} The NodeData for this Node.
- */
-var getData = function(node) {
-  var data = node['__incrementalDOMData'];
-
-  if (!data) {
-    var nodeName = node.nodeName.toLowerCase();
-    var key = null;
-
-    if (node instanceof Element) {
-      key = node.getAttribute('key');
-    }
-
-    data = initData(node, nodeName, key);
-  }
-
-  return data;
-};
-
-
-/** */
-module.exports = {
-  getData: getData,
-  initData: initData
-};
-
 
 },{}],6:[function(require,module,exports){
-/**
- * Copyright 2015 The Incremental DOM Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS-IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+var nativeIsArray = Array.isArray
+var toString = Object.prototype.toString
 
-var updateAttribute = require('./attributes').updateAttribute;
-var nodeData = require('./node_data'),
-    getData = nodeData.getData,
-    initData = nodeData.initData;
+module.exports = nativeIsArray || isArray
 
-
-/**
- * Creates an Element.
- * @param {!Document} doc The document with which to create the Element.
- * @param {string} tag The tag for the Element.
- * @param {?string} key A key to identify the Element.
- * @param {?Array<*>} statics An array of attribute name/value pairs of
- *     the static attributes for the Element.
- * @return {!Element}
- */
-var createElement = function(doc, tag, key, statics) {
-  var el = doc.createElement(tag);
-  initData(el, tag, key);
-
-  if (statics) {
-    for (var i = 0; i < statics.length; i += 2) {
-      updateAttribute(el, statics[i], statics[i + 1]);
-    }
-  }
-
-  return el;
-};
-
-/**
- * Creates a Text.
- * @param {!Document} doc The document with which to create the Text.
- * @param {string} text The intial content of the Text.
- * @return {!Text}
- */
-var createTextNode = function(doc, text) {
-  var node = doc.createTextNode(text);
-  getData(node).text = text;
-
-  return node;
-};
-
-
-/**
- * Creates a Node, either a Text or an Element depending on the node name
- * provided.
- * @param {!Document} doc The document with which to create the Node.
- * @param {string} nodeName The tag if creating an element or #text to create
- *     a Text.
- * @param {?string} key A key to identify the Element.
- * @param {?Array<*>|string} statics The static data to initialize the Node
- *     with. For an Element, an array of attribute name/value pairs of
- *     the static attributes for the Element. For a Text, a string with the
- *     intial content of the Text.
- * @return {!Node}
- */
-var createNode = function(doc, nodeName, key, statics) {
-  if (nodeName === '#text') {
-    return createTextNode(doc, statics);
-  }
-
-  return createElement(doc, nodeName, key, statics);
-};
-
-
-/**
- * Creates a mapping that can be used to look up children using a key.
- * @param {!Element} el
- * @return {!Object<string, !Node>} A mapping of keys to the children of the
- *     Element.
- */
-var createKeyMap = function(el) {
-  var map = {};
-  var children = el.children;
-  var count = children.length;
-
-  for (var i = 0; i < count; i += 1) {
-    var child = children[i];
-    var key = getKey(child);
-
-    if (key) {
-      map[key] = child;
-    }
-  }
-
-  return map;
-};
-
-
-/**
- * @param {?Node} node A node to get the key for.
- * @return {?string} The key for the Node, if applicable.
- */
-var getKey = function(node) {
-  return getData(node).key;
-};
-
-
-/**
- * @param {?Node} node A node to get the node name for.
- * @return {?string} The node name for the Node, if applicable.
- */
-var getNodeName = function(node) {
-  return getData(node).nodeName;
-};
-
-
-/**
- * Retrieves the mapping of key to child node for a given Element, creating it
- * if necessary.
- * @param {!Element} el
- * @return {!Object<string,!Node>} A mapping of keys to child Nodes
- */
-var getKeyMap = function(el) {
-  var data = getData(el);
-
-  if (!data.keyMap) {
-    data.keyMap = createKeyMap(el);
-  }
-
-  return data.keyMap;
-};
-
-
-/**
- * Retrieves a child from the parent with the given key.
- * @param {!Element} parent
- * @param {?string} key
- * @return {?Node} The child corresponding to the key.
- */
-var getChild = function(parent, key) {
-  return getKeyMap(parent)[key];
-};
-
-
-/**
- * Registers a node as being a child. If a key is provided, the parent will
- * keep track of the child using the key. The child can be retrieved using the
- * same key using getKeyMap. The provided key should be unique within the
- * parent Element.
- * @param {!Element} parent The parent of child.
- * @param {?string} key A key to identify the child with.
- * @param {!Node} child The child to register.
- */
-var registerChild = function(parent, key, child) {
-  if (key) {
-    getKeyMap(parent)[key] = child;
-  }
-};
-
-
-/** */
-module.exports = {
-  createNode: createNode,
-  getKey: getKey,
-  getNodeName: getNodeName,
-  getChild: getChild,
-  registerChild: registerChild
-};
-
-
-},{"./attributes":4,"./node_data":5}],7:[function(require,module,exports){
-/**
- * Copyright 2015 The Incremental DOM Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS-IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-var traversal = require('./traversal'),
-    firstChild = traversal.firstChild,
-    parentNode = traversal.parentNode;
-var TreeWalker = require('./tree_walker');
-var walker = require('./walker'),
-    getWalker = walker.getWalker,
-    setWalker = walker.setWalker;
-
-
-/**
- * Patches the document starting at el with the provided function. This function
- * may be called during an existing patch operation.
- * @param {!Element} el the element to patch
- * @param {!function} fn A function containing elementOpen/elementClose/etc.
- *     calls that describe the DOM.
- */
-var patch = function(el, fn) {
-  var prevWalker = getWalker();
-  setWalker(new TreeWalker(el));
-
-  firstChild();
-  fn();
-  parentNode();
-
-  setWalker(prevWalker);
-};
-
-
-/** */
-module.exports = {
-  patch: patch
-};
-
-
-},{"./traversal":8,"./tree_walker":9,"./walker":11}],8:[function(require,module,exports){
-/**
- * Copyright 2015 The Incremental DOM Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS-IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-var getWalker = require('./walker').getWalker;
-var getData = require('./node_data').getData;
-
-
-/**
- * Enters a Element, clearing out the last visited child field.
- * @param {!Element} node
- */
-var enterNode = function(node) {
-  var data = getData(node);
-  data.lastVisitedChild = null;
-};
-
-
-/**
- * Clears out any unvisited Nodes, as the corresponding virtual element
- * functions were never called for them.
- * @param {!Element} node
- */
-var exitNode = function(node) {
-  var data = getData(node);
-  var lastVisitedChild = data.lastVisitedChild;
-
-  if (node.lastChild === lastVisitedChild) {
-    return;
-  }
-
-  while (node.lastChild !== lastVisitedChild) {
-    node.removeChild(node.lastChild);
-  }
-
-  // Invalidate the key map since we removed children. It will get recreated
-  // next time we need it.
-  data.keyMap = null;
-};
-
-
-/**
- * Marks a parent as having visited a child.
- * @param {!Element} parent
- * @param {!Node} child
- */
-var markVisited = function(parent, child) {
-  var data = getData(parent);
-  data.lastVisitedChild = child;
-};
-
-
-/**
- * Changes to the first child of the current node.
- */
-var firstChild = function() {
-  var walker = getWalker();
-  enterNode(walker.currentNode);
-  walker.firstChild();
-};
-
-
-/**
- * Changes to the next sibling of the current node.
- */
-var nextSibling = function() {
-  var walker = getWalker();
-  walker.nextSibling();
-};
-
-
-/**
- * Changes to the parent of the current node, removing any unvisited children.
- */
-var parentNode = function() {
-  var walker = getWalker();
-  walker.parentNode();
-  exitNode(walker.currentNode);
-};
-
-
-/** */
-module.exports = {
-  firstChild: firstChild,
-  nextSibling: nextSibling,
-  parentNode: parentNode,
-  markVisited: markVisited
-};
-
-
-},{"./node_data":5,"./walker":11}],9:[function(require,module,exports){
-/**
- * Copyright 2015 The Incremental DOM Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS-IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/**
- * Similar to the built-in Treewalker class, but simplified and allows direct
- * access to modify the currentNode property.
- * @param {!Node} node The root Node of the subtree the walker should start
- *     traversing.
- * @constructor
- */
-function TreeWalker(node) {
-  /**
-   * Keeps track of the current parent node. This is necessary as the traversal
-   * methods may traverse past the last child and we still need a way to get
-   * back to the parent.
-   * @const @private {!Array<!Node>}
-   */
-  this.stack_ = [];
-
-  /** {?Node} */
-  this.currentNode = node;
-
-  /** {!Document} */
-  this.doc = node.ownerDocument;
+function isArray(obj) {
+    return toString.call(obj) === "[object Array]"
 }
 
+},{}],7:[function(require,module,exports){
+var patch = require("./vdom/patch.js")
 
-/**
- * @return {!Node} The current parent of the current location in the subtree.
- */
-TreeWalker.prototype.getCurrentParent = function() {
-  return this.stack_[this.stack_.length - 1];
-};
+module.exports = patch
 
+},{"./vdom/patch.js":12}],8:[function(require,module,exports){
+var isObject = require("is-object")
+var isHook = require("../vnode/is-vhook.js")
 
-/**
- * Changes the current location the firstChild of the current location.
- */
-TreeWalker.prototype.firstChild = function() {
-  this.stack_.push(this.currentNode);
-  this.currentNode = this.currentNode.firstChild;
-};
+module.exports = applyProperties
 
+function applyProperties(node, props, previous) {
+    for (var propName in props) {
+        var propValue = props[propName]
 
-/**
- * Changes the current location the nextSibling of the current location.
- */
-TreeWalker.prototype.nextSibling = function() {
-  this.currentNode = this.currentNode.nextSibling;
-};
-
-
-/**
- * Changes the current location the parentNode of the current location.
- */
-TreeWalker.prototype.parentNode = function() {
-  this.currentNode = this.stack_.pop();
-};
-
-
-/** */
-module.exports = TreeWalker;
-
-
-},{}],10:[function(require,module,exports){
-(function (process){
-/**
- * Copyright 2015 The Incremental DOM Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS-IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-var alignWithDOM = require('./alignment').alignWithDOM;
-var updateAttribute = require('./attributes').updateAttribute;
-var getData = require('./node_data').getData;
-var getWalker = require('./walker').getWalker;
-var traversal = require('./traversal'),
-    firstChild = traversal.firstChild,
-    nextSibling = traversal.nextSibling,
-    parentNode = traversal.parentNode;
-
-
-/**
- * The offset in the virtual element declaration where the attributes are
- * specified.
- * @const
- */
-var ATTRIBUTES_OFFSET = 3;
-
-
-/**
- * Builds an array of arguments for use with elementOpenStart, attr and
- * elementOpenEnd.
- * @type {Array<*>}
- * @const
- */
-var argsBuilder = [];
-
-
-if (process.env.NODE_ENV !== 'production') {
-  /**
-   * Keeps track whether or not we are in an attributes declaration (after
-   * elementOpenStart, but before elementOpenEnd).
-   * @type {boolean}
-   */
-  var inAttributes = false;
-
-
-  /** Makes sure that the caller is not where attributes are expected. */
-  var assertNotInAttributes = function() {
-    if (inAttributes) {
-      throw new Error('Was not expecting a call to attr or elementOpenEnd, ' +
-          'they must follow a call to elementOpenStart.');
+        if (propValue === undefined) {
+            removeProperty(node, propName, propValue, previous);
+        } else if (isHook(propValue)) {
+            removeProperty(node, propName, propValue, previous)
+            if (propValue.hook) {
+                propValue.hook(node,
+                    propName,
+                    previous ? previous[propName] : undefined)
+            }
+        } else {
+            if (isObject(propValue)) {
+                patchObject(node, props, previous, propName, propValue);
+            } else {
+                node[propName] = propValue
+            }
+        }
     }
-  };
-
-
-  /** Makes sure that the caller is where attributes are expected. */
-  var assertInAttributes = function() {
-    if (!inAttributes) {
-      throw new Error('Was expecting a call to attr or elementOpenEnd. ' +
-          'elementOpenStart must be followed by zero or more calls to attr, ' +
-          'then one call to elementOpenEnd.');
-    }
-  };
-
-
-  /** Updates the state to being in an attribute declaration. */
-  var setInAttributes = function() {
-    inAttributes = true;
-  };
-
-
-  /** Updates the state to not being in an attribute declaration. */
-  var setNotInAttributes = function() {
-    inAttributes = false;
-  };
 }
 
+function removeProperty(node, propName, propValue, previous) {
+    if (previous) {
+        var previousValue = previous[propName]
 
-/**
- * Checks to see if one or more attributes have changed for a given
- * Element. When no attributes have changed, this function is much faster than
- * checking each individual argument. When attributes have changed, the overhead
- * of this function is minimal.
- *
- * This function is called in the context of the Element and the arguments from
- * elementOpen-like function so that the arguments are not de-optimized.
- *
- * @this {Element} The Element to check for changed attributes.
- * @param {*} unused1
- * @param {*} unused2
- * @param {*} unused3
- * @param {...*} var_args Attribute name/value pairs of the dynamic attributes
- *     for the Element.
- * @return {boolean} True if the Element has one or more changed attributes,
- *     false otherwise.
- */
-var hasChangedAttrs = function(unused1, unused2, unused3, var_args) {
-  var data = getData(this);
-  var attrsArr = data.attrsArr;
-  var attrsChanged = false;
-  var i;
-
-  for (i = ATTRIBUTES_OFFSET; i < arguments.length; i += 2) {
-    // Translate the from the arguments index (for values) to the attribute's
-    // ordinal. The attribute values are at arguments index 3, 5, 7, etc. To get
-    // the ordinal, need to subtract the offset and divide by 2
-    if (attrsArr[(i - ATTRIBUTES_OFFSET) >> 1] !== arguments[i + 1]) {
-      attrsChanged = true;
-      break;
+        if (!isHook(previousValue)) {
+            if (propName === "attributes") {
+                for (var attrName in previousValue) {
+                    node.removeAttribute(attrName)
+                }
+            } else if (propName === "style") {
+                for (var i in previousValue) {
+                    node.style[i] = ""
+                }
+            } else if (typeof previousValue === "string") {
+                node[propName] = ""
+            } else {
+                node[propName] = null
+            }
+        } else if (previousValue.unhook) {
+            previousValue.unhook(node, propName, propValue)
+        }
     }
-  }
+}
 
-  if (attrsChanged) {
-    for (i = ATTRIBUTES_OFFSET; i < arguments.length; i += 2) {
-      attrsArr[(i - ATTRIBUTES_OFFSET) >> 1] = arguments[i + 1];
+function patchObject(node, props, previous, propName, propValue) {
+    var previousValue = previous ? previous[propName] : undefined
+
+    // Set attributes
+    if (propName === "attributes") {
+        for (var attrName in propValue) {
+            var attrValue = propValue[attrName]
+
+            if (attrValue === undefined) {
+                node.removeAttribute(attrName)
+            } else {
+                node.setAttribute(attrName, attrValue)
+            }
+        }
+
+        return
     }
+
+    if(previousValue && isObject(previousValue) &&
+        getPrototype(previousValue) !== getPrototype(propValue)) {
+        node[propName] = propValue
+        return
+    }
+
+    if (!isObject(node[propName])) {
+        node[propName] = {}
+    }
+
+    var replacer = propName === "style" ? "" : undefined
+
+    for (var k in propValue) {
+        var value = propValue[k]
+        node[propName][k] = (value === undefined) ? replacer : value
+    }
+}
+
+function getPrototype(value) {
+    if (Object.getPrototypeOf) {
+        return Object.getPrototypeOf(value)
+    } else if (value.__proto__) {
+        return value.__proto__
+    } else if (value.constructor) {
+        return value.constructor.prototype
+    }
+}
+
+},{"../vnode/is-vhook.js":16,"is-object":5}],9:[function(require,module,exports){
+var document = require("global/document")
+
+var applyProperties = require("./apply-properties")
+
+var isVNode = require("../vnode/is-vnode.js")
+var isVText = require("../vnode/is-vtext.js")
+var isWidget = require("../vnode/is-widget.js")
+var handleThunk = require("../vnode/handle-thunk.js")
+
+module.exports = createElement
+
+function createElement(vnode, opts) {
+    var doc = opts ? opts.document || document : document
+    var warn = opts ? opts.warn : null
+
+    vnode = handleThunk(vnode).a
+
+    if (isWidget(vnode)) {
+        return vnode.init()
+    } else if (isVText(vnode)) {
+        return doc.createTextNode(vnode.text)
+    } else if (!isVNode(vnode)) {
+        if (warn) {
+            warn("Item is not a valid virtual dom node", vnode)
+        }
+        return null
+    }
+
+    var node = (vnode.namespace === null) ?
+        doc.createElement(vnode.tagName) :
+        doc.createElementNS(vnode.namespace, vnode.tagName)
+
+    var props = vnode.properties
+    applyProperties(node, props)
+
+    var children = vnode.children
+
+    for (var i = 0; i < children.length; i++) {
+        var childNode = createElement(children[i], opts)
+        if (childNode) {
+            node.appendChild(childNode)
+        }
+    }
+
+    return node
+}
+
+},{"../vnode/handle-thunk.js":14,"../vnode/is-vnode.js":17,"../vnode/is-vtext.js":18,"../vnode/is-widget.js":19,"./apply-properties":8,"global/document":4}],10:[function(require,module,exports){
+// Maps a virtual DOM tree onto a real DOM tree in an efficient manner.
+// We don't want to read all of the DOM nodes in the tree so we use
+// the in-order tree indexing to eliminate recursion down certain branches.
+// We only recurse into a DOM node if we know that it contains a child of
+// interest.
+
+var noChild = {}
+
+module.exports = domIndex
+
+function domIndex(rootNode, tree, indices, nodes) {
+    if (!indices || indices.length === 0) {
+        return {}
+    } else {
+        indices.sort(ascending)
+        return recurse(rootNode, tree, indices, nodes, 0)
+    }
+}
+
+function recurse(rootNode, tree, indices, nodes, rootIndex) {
+    nodes = nodes || {}
+
+
+    if (rootNode) {
+        if (indexInRange(indices, rootIndex, rootIndex)) {
+            nodes[rootIndex] = rootNode
+        }
+
+        var vChildren = tree.children
+
+        if (vChildren) {
+
+            var childNodes = rootNode.childNodes
+
+            for (var i = 0; i < tree.children.length; i++) {
+                rootIndex += 1
+
+                var vChild = vChildren[i] || noChild
+                var nextIndex = rootIndex + (vChild.count || 0)
+
+                // skip recursion down the tree if there are no nodes down here
+                if (indexInRange(indices, rootIndex, nextIndex)) {
+                    recurse(childNodes[i], vChild, indices, nodes, rootIndex)
+                }
+
+                rootIndex = nextIndex
+            }
+        }
+    }
+
+    return nodes
+}
+
+// Binary search for an index in the interval [left, right]
+function indexInRange(indices, left, right) {
+    if (indices.length === 0) {
+        return false
+    }
+
+    var minIndex = 0
+    var maxIndex = indices.length - 1
+    var currentIndex
+    var currentItem
+
+    while (minIndex <= maxIndex) {
+        currentIndex = ((maxIndex + minIndex) / 2) >> 0
+        currentItem = indices[currentIndex]
+
+        if (minIndex === maxIndex) {
+            return currentItem >= left && currentItem <= right
+        } else if (currentItem < left) {
+            minIndex = currentIndex + 1
+        } else  if (currentItem > right) {
+            maxIndex = currentIndex - 1
+        } else {
+            return true
+        }
+    }
+
+    return false;
+}
+
+function ascending(a, b) {
+    return a > b ? 1 : -1
+}
+
+},{}],11:[function(require,module,exports){
+var applyProperties = require("./apply-properties")
+
+var isWidget = require("../vnode/is-widget.js")
+var VPatch = require("../vnode/vpatch.js")
+
+var render = require("./create-element")
+var updateWidget = require("./update-widget")
+
+module.exports = applyPatch
+
+function applyPatch(vpatch, domNode, renderOptions) {
+    var type = vpatch.type
+    var vNode = vpatch.vNode
+    var patch = vpatch.patch
+
+    switch (type) {
+        case VPatch.REMOVE:
+            return removeNode(domNode, vNode)
+        case VPatch.INSERT:
+            return insertNode(domNode, patch, renderOptions)
+        case VPatch.VTEXT:
+            return stringPatch(domNode, vNode, patch, renderOptions)
+        case VPatch.WIDGET:
+            return widgetPatch(domNode, vNode, patch, renderOptions)
+        case VPatch.VNODE:
+            return vNodePatch(domNode, vNode, patch, renderOptions)
+        case VPatch.ORDER:
+            reorderChildren(domNode, patch)
+            return domNode
+        case VPatch.PROPS:
+            applyProperties(domNode, patch, vNode.properties)
+            return domNode
+        case VPatch.THUNK:
+            return replaceRoot(domNode,
+                renderOptions.patch(domNode, patch, renderOptions))
+        default:
+            return domNode
+    }
+}
+
+function removeNode(domNode, vNode) {
+    var parentNode = domNode.parentNode
+
+    if (parentNode) {
+        parentNode.removeChild(domNode)
+    }
+
+    destroyWidget(domNode, vNode);
+
+    return null
+}
+
+function insertNode(parentNode, vNode, renderOptions) {
+    var newNode = render(vNode, renderOptions)
+
+    if (parentNode) {
+        parentNode.appendChild(newNode)
+    }
+
+    return parentNode
+}
+
+function stringPatch(domNode, leftVNode, vText, renderOptions) {
+    var newNode
+
+    if (domNode.nodeType === 3) {
+        domNode.replaceData(0, domNode.length, vText.text)
+        newNode = domNode
+    } else {
+        var parentNode = domNode.parentNode
+        newNode = render(vText, renderOptions)
+
+        if (parentNode && newNode !== domNode) {
+            parentNode.replaceChild(newNode, domNode)
+        }
+    }
+
+    return newNode
+}
+
+function widgetPatch(domNode, leftVNode, widget, renderOptions) {
+    var updating = updateWidget(leftVNode, widget)
+    var newNode
+
+    if (updating) {
+        newNode = widget.update(leftVNode, domNode) || domNode
+    } else {
+        newNode = render(widget, renderOptions)
+    }
+
+    var parentNode = domNode.parentNode
+
+    if (parentNode && newNode !== domNode) {
+        parentNode.replaceChild(newNode, domNode)
+    }
+
+    if (!updating) {
+        destroyWidget(domNode, leftVNode)
+    }
+
+    return newNode
+}
+
+function vNodePatch(domNode, leftVNode, vNode, renderOptions) {
+    var parentNode = domNode.parentNode
+    var newNode = render(vNode, renderOptions)
+
+    if (parentNode && newNode !== domNode) {
+        parentNode.replaceChild(newNode, domNode)
+    }
+
+    return newNode
+}
+
+function destroyWidget(domNode, w) {
+    if (typeof w.destroy === "function" && isWidget(w)) {
+        w.destroy(domNode)
+    }
+}
+
+function reorderChildren(domNode, moves) {
+    var childNodes = domNode.childNodes
+    var keyMap = {}
+    var node
+    var remove
+    var insert
+
+    for (var i = 0; i < moves.removes.length; i++) {
+        remove = moves.removes[i]
+        node = childNodes[remove.from]
+        if (remove.key) {
+            keyMap[remove.key] = node
+        }
+        domNode.removeChild(node)
+    }
+
+    var length = childNodes.length
+    for (var j = 0; j < moves.inserts.length; j++) {
+        insert = moves.inserts[j]
+        node = keyMap[insert.key]
+        // this is the weirdest bug i've ever seen in webkit
+        domNode.insertBefore(node, insert.to >= length++ ? null : childNodes[insert.to])
+    }
+}
+
+function replaceRoot(oldRoot, newRoot) {
+    if (oldRoot && newRoot && oldRoot !== newRoot && oldRoot.parentNode) {
+        oldRoot.parentNode.replaceChild(newRoot, oldRoot)
+    }
+
+    return newRoot;
+}
+
+},{"../vnode/is-widget.js":19,"../vnode/vpatch.js":22,"./apply-properties":8,"./create-element":9,"./update-widget":13}],12:[function(require,module,exports){
+var document = require("global/document")
+var isArray = require("x-is-array")
+
+var domIndex = require("./dom-index")
+var patchOp = require("./patch-op")
+module.exports = patch
+
+function patch(rootNode, patches) {
+    return patchRecursive(rootNode, patches)
+}
+
+function patchRecursive(rootNode, patches, renderOptions) {
+    var indices = patchIndices(patches)
+
+    if (indices.length === 0) {
+        return rootNode
+    }
+
+    var index = domIndex(rootNode, patches.a, indices)
+    var ownerDocument = rootNode.ownerDocument
+
+    if (!renderOptions) {
+        renderOptions = { patch: patchRecursive }
+        if (ownerDocument !== document) {
+            renderOptions.document = ownerDocument
+        }
+    }
+
+    for (var i = 0; i < indices.length; i++) {
+        var nodeIndex = indices[i]
+        rootNode = applyPatch(rootNode,
+            index[nodeIndex],
+            patches[nodeIndex],
+            renderOptions)
+    }
+
+    return rootNode
+}
+
+function applyPatch(rootNode, domNode, patchList, renderOptions) {
+    if (!domNode) {
+        return rootNode
+    }
+
+    var newNode
+
+    if (isArray(patchList)) {
+        for (var i = 0; i < patchList.length; i++) {
+            newNode = patchOp(patchList[i], domNode, renderOptions)
+
+            if (domNode === rootNode) {
+                rootNode = newNode
+            }
+        }
+    } else {
+        newNode = patchOp(patchList, domNode, renderOptions)
+
+        if (domNode === rootNode) {
+            rootNode = newNode
+        }
+    }
+
+    return rootNode
+}
+
+function patchIndices(patches) {
+    var indices = []
+
+    for (var key in patches) {
+        if (key !== "a") {
+            indices.push(Number(key))
+        }
+    }
+
+    return indices
+}
+
+},{"./dom-index":10,"./patch-op":11,"global/document":4,"x-is-array":6}],13:[function(require,module,exports){
+var isWidget = require("../vnode/is-widget.js")
+
+module.exports = updateWidget
+
+function updateWidget(a, b) {
+    if (isWidget(a) && isWidget(b)) {
+        if ("name" in a && "name" in b) {
+            return a.id === b.id
+        } else {
+            return a.init === b.init
+        }
+    }
+
+    return false
+}
+
+},{"../vnode/is-widget.js":19}],14:[function(require,module,exports){
+var isVNode = require("./is-vnode")
+var isVText = require("./is-vtext")
+var isWidget = require("./is-widget")
+var isThunk = require("./is-thunk")
+
+module.exports = handleThunk
+
+function handleThunk(a, b) {
+    var renderedA = a
+    var renderedB = b
+
+    if (isThunk(b)) {
+        renderedB = renderThunk(b, a)
+    }
+
+    if (isThunk(a)) {
+        renderedA = renderThunk(a, null)
+    }
+
+    return {
+        a: renderedA,
+        b: renderedB
+    }
+}
+
+function renderThunk(thunk, previous) {
+    var renderedThunk = thunk.vnode
+
+    if (!renderedThunk) {
+        renderedThunk = thunk.vnode = thunk.render(previous)
+    }
+
+    if (!(isVNode(renderedThunk) ||
+            isVText(renderedThunk) ||
+            isWidget(renderedThunk))) {
+        throw new Error("thunk did not return a valid node");
+    }
+
+    return renderedThunk
+}
+
+},{"./is-thunk":15,"./is-vnode":17,"./is-vtext":18,"./is-widget":19}],15:[function(require,module,exports){
+module.exports = isThunk
+
+function isThunk(t) {
+    return t && t.type === "Thunk"
+}
+
+},{}],16:[function(require,module,exports){
+module.exports = isHook
+
+function isHook(hook) {
+    return hook &&
+      (typeof hook.hook === "function" && !hook.hasOwnProperty("hook") ||
+       typeof hook.unhook === "function" && !hook.hasOwnProperty("unhook"))
+}
+
+},{}],17:[function(require,module,exports){
+var version = require("./version")
+
+module.exports = isVirtualNode
+
+function isVirtualNode(x) {
+    return x && x.type === "VirtualNode" && x.version === version
+}
+
+},{"./version":20}],18:[function(require,module,exports){
+var version = require("./version")
+
+module.exports = isVirtualText
+
+function isVirtualText(x) {
+    return x && x.type === "VirtualText" && x.version === version
+}
+
+},{"./version":20}],19:[function(require,module,exports){
+module.exports = isWidget
+
+function isWidget(w) {
+    return w && w.type === "Widget"
+}
+
+},{}],20:[function(require,module,exports){
+module.exports = "2"
+
+},{}],21:[function(require,module,exports){
+var version = require("./version")
+var isVNode = require("./is-vnode")
+var isWidget = require("./is-widget")
+var isThunk = require("./is-thunk")
+var isVHook = require("./is-vhook")
+
+module.exports = VirtualNode
+
+var noProperties = {}
+var noChildren = []
+
+function VirtualNode(tagName, properties, children, key, namespace) {
+    this.tagName = tagName
+    this.properties = properties || noProperties
+    this.children = children || noChildren
+    this.key = key != null ? String(key) : undefined
+    this.namespace = (typeof namespace === "string") ? namespace : null
+
+    var count = (children && children.length) || 0
+    var descendants = 0
+    var hasWidgets = false
+    var hasThunks = false
+    var descendantHooks = false
+    var hooks
+
+    for (var propName in properties) {
+        if (properties.hasOwnProperty(propName)) {
+            var property = properties[propName]
+            if (isVHook(property) && property.unhook) {
+                if (!hooks) {
+                    hooks = {}
+                }
+
+                hooks[propName] = property
+            }
+        }
+    }
+
+    for (var i = 0; i < count; i++) {
+        var child = children[i]
+        if (isVNode(child)) {
+            descendants += child.count || 0
+
+            if (!hasWidgets && child.hasWidgets) {
+                hasWidgets = true
+            }
+
+            if (!hasThunks && child.hasThunks) {
+                hasThunks = true
+            }
+
+            if (!descendantHooks && (child.hooks || child.descendantHooks)) {
+                descendantHooks = true
+            }
+        } else if (!hasWidgets && isWidget(child)) {
+            if (typeof child.destroy === "function") {
+                hasWidgets = true
+            }
+        } else if (!hasThunks && isThunk(child)) {
+            hasThunks = true;
+        }
+    }
+
+    this.count = count + descendants
+    this.hasWidgets = hasWidgets
+    this.hasThunks = hasThunks
+    this.hooks = hooks
+    this.descendantHooks = descendantHooks
+}
+
+VirtualNode.prototype.version = version
+VirtualNode.prototype.type = "VirtualNode"
+
+},{"./is-thunk":15,"./is-vhook":16,"./is-vnode":17,"./is-widget":19,"./version":20}],22:[function(require,module,exports){
+var version = require("./version")
+
+VirtualPatch.NONE = 0
+VirtualPatch.VTEXT = 1
+VirtualPatch.VNODE = 2
+VirtualPatch.WIDGET = 3
+VirtualPatch.PROPS = 4
+VirtualPatch.ORDER = 5
+VirtualPatch.INSERT = 6
+VirtualPatch.REMOVE = 7
+VirtualPatch.THUNK = 8
+
+module.exports = VirtualPatch
+
+function VirtualPatch(type, vNode, patch) {
+    this.type = Number(type)
+    this.vNode = vNode
+    this.patch = patch
+}
+
+VirtualPatch.prototype.version = version
+VirtualPatch.prototype.type = "VirtualPatch"
+
+},{"./version":20}],23:[function(require,module,exports){
+var version = require("./version")
+
+module.exports = VirtualText
+
+function VirtualText(text) {
+    this.text = String(text)
+}
+
+VirtualText.prototype.version = version
+VirtualText.prototype.type = "VirtualText"
+
+},{"./version":20}],24:[function(require,module,exports){
+var isObject = require("is-object")
+var isHook = require("../vnode/is-vhook")
+
+module.exports = diffProps
+
+function diffProps(a, b) {
+    var diff
+
+    for (var aKey in a) {
+        if (!(aKey in b)) {
+            diff = diff || {}
+            diff[aKey] = undefined
+        }
+
+        var aValue = a[aKey]
+        var bValue = b[aKey]
+
+        if (aValue === bValue) {
+            continue
+        } else if (isObject(aValue) && isObject(bValue)) {
+            if (getPrototype(bValue) !== getPrototype(aValue)) {
+                diff = diff || {}
+                diff[aKey] = bValue
+            } else if (isHook(bValue)) {
+                 diff = diff || {}
+                 diff[aKey] = bValue
+            } else {
+                var objectDiff = diffProps(aValue, bValue)
+                if (objectDiff) {
+                    diff = diff || {}
+                    diff[aKey] = objectDiff
+                }
+            }
+        } else {
+            diff = diff || {}
+            diff[aKey] = bValue
+        }
+    }
+
+    for (var bKey in b) {
+        if (!(bKey in a)) {
+            diff = diff || {}
+            diff[bKey] = b[bKey]
+        }
+    }
+
+    return diff
+}
+
+function getPrototype(value) {
+  if (Object.getPrototypeOf) {
+    return Object.getPrototypeOf(value)
+  } else if (value.__proto__) {
+    return value.__proto__
+  } else if (value.constructor) {
+    return value.constructor.prototype
   }
+}
 
-  return attrsChanged;
-};
+},{"../vnode/is-vhook":16,"is-object":5}],25:[function(require,module,exports){
+var isArray = require("x-is-array")
 
+var VPatch = require("../vnode/vpatch")
+var isVNode = require("../vnode/is-vnode")
+var isVText = require("../vnode/is-vtext")
+var isWidget = require("../vnode/is-widget")
+var isThunk = require("../vnode/is-thunk")
+var handleThunk = require("../vnode/handle-thunk")
 
-/**
- * Updates the newAttrs object for an Element.
- *
- * This function is called in the context of the Element and the arguments from
- * elementOpen-like function so that the arguments are not de-optimized.
- *
- * @this {Element} The Element to update newAttrs for.
- * @param {*} unused1
- * @param {*} unused2
- * @param {*} unused3
- * @param {...*} var_args Attribute name/value pairs of the dynamic attributes
- *     for the Element.
- * @return {!Object<string, *>} The updated newAttrs object.
- */
-var updateNewAttrs = function(unused1, unused2, unused3, var_args) {
-  var node = this;
-  var data = getData(node);
-  var newAttrs = data.newAttrs;
+var diffProps = require("./diff-props")
 
-  for (var attr in newAttrs) {
-    newAttrs[attr] = undefined;
-  }
+module.exports = diff
 
-  for (var i = ATTRIBUTES_OFFSET; i < arguments.length; i += 2) {
-    newAttrs[arguments[i]] = arguments[i + 1];
-  }
+function diff(a, b) {
+    var patch = { a: a }
+    walk(a, b, patch, 0)
+    return patch
+}
 
-  return newAttrs;
-};
+function walk(a, b, patch, index) {
+    if (a === b) {
+        return
+    }
 
+    var apply = patch[index]
+    var applyClear = false
 
-/**
- * Updates the attributes for a given Element.
- * @param {!Element} node
- * @param {!Object<string,*>} newAttrs The new attributes for node
- */
-var updateAttributes = function(node, newAttrs) {
-  for (var attr in newAttrs) {
-    updateAttribute(node, attr, newAttrs[attr]);
-  }
-};
+    if (isThunk(a) || isThunk(b)) {
+        thunks(a, b, patch, index)
+    } else if (b == null) {
 
+        // If a is a widget we will add a remove patch for it
+        // Otherwise any child widgets/hooks must be destroyed.
+        // This prevents adding two remove patches for a widget.
+        if (!isWidget(a)) {
+            clearState(a, patch, index)
+            apply = patch[index]
+        }
 
-/**
- * Declares a virtual Element at the current location in the document. This
- * corresponds to an opening tag and a elementClose tag is required.
- * @param {string} tag The element's tag.
- * @param {?string} key The key used to identify this element. This can be an
- *     empty string, but performance may be better if a unique value is used
- *     when iterating over an array of items.
- * @param {?Array<*>} statics An array of attribute name/value pairs of the
- *     static attributes for the Element. These will only be set once when the
- *     Element is created.
- * @param {...*} var_args Attribute name/value pairs of the dynamic attributes
- *     for the Element.
- */
-var elementOpen = function(tag, key, statics, var_args) {
-  if (process.env.NODE_ENV !== 'production') {
-    assertNotInAttributes();
-  }
+        apply = appendPatch(apply, new VPatch(VPatch.REMOVE, a, b))
+    } else if (isVNode(b)) {
+        if (isVNode(a)) {
+            if (a.tagName === b.tagName &&
+                a.namespace === b.namespace &&
+                a.key === b.key) {
+                var propsPatch = diffProps(a.properties, b.properties)
+                if (propsPatch) {
+                    apply = appendPatch(apply,
+                        new VPatch(VPatch.PROPS, a, propsPatch))
+                }
+                apply = diffChildren(a, b, patch, apply, index)
+            } else {
+                apply = appendPatch(apply, new VPatch(VPatch.VNODE, a, b))
+                applyClear = true
+            }
+        } else {
+            apply = appendPatch(apply, new VPatch(VPatch.VNODE, a, b))
+            applyClear = true
+        }
+    } else if (isVText(b)) {
+        if (!isVText(a)) {
+            apply = appendPatch(apply, new VPatch(VPatch.VTEXT, a, b))
+            applyClear = true
+        } else if (a.text !== b.text) {
+            apply = appendPatch(apply, new VPatch(VPatch.VTEXT, a, b))
+        }
+    } else if (isWidget(b)) {
+        if (!isWidget(a)) {
+            applyClear = true
+        }
 
-  var node = alignWithDOM(tag, key, statics);
+        apply = appendPatch(apply, new VPatch(VPatch.WIDGET, a, b))
+    }
 
-  if (hasChangedAttrs.apply(node, arguments)) {
-    var newAttrs = updateNewAttrs.apply(node, arguments);
-    updateAttributes(node, newAttrs);
-  }
+    if (apply) {
+        patch[index] = apply
+    }
 
-  firstChild();
-};
+    if (applyClear) {
+        clearState(a, patch, index)
+    }
+}
 
+function diffChildren(a, b, patch, apply, index) {
+    var aChildren = a.children
+    var orderedSet = reorder(aChildren, b.children)
+    var bChildren = orderedSet.children
 
-/**
- * Declares a virtual Element at the current location in the document. This
- * corresponds to an opening tag and a elementClose tag is required. This is
- * like elementOpen, but the attributes are defined using the attr function
- * rather than being passed as arguments. Must be folllowed by 0 or more calls
- * to attr, then a call to elementOpenEnd.
- * @param {string} tag The element's tag.
- * @param {?string} key The key used to identify this element. This can be an
- *     empty string, but performance may be better if a unique value is used
- *     when iterating over an array of items.
- * @param {?Array<*>} statics An array of attribute name/value pairs of the
- *     static attributes for the Element. These will only be set once when the
- *     Element is created.
- */
-var elementOpenStart = function(tag, key, statics) {
-  if (process.env.NODE_ENV !== 'production') {
-    assertNotInAttributes();
-    setInAttributes();
-  }
+    var aLen = aChildren.length
+    var bLen = bChildren.length
+    var len = aLen > bLen ? aLen : bLen
 
-  argsBuilder[0] = tag;
-  argsBuilder[1] = key;
-  argsBuilder[2] = statics;
-  argsBuilder.length = ATTRIBUTES_OFFSET;
-};
+    for (var i = 0; i < len; i++) {
+        var leftNode = aChildren[i]
+        var rightNode = bChildren[i]
+        index += 1
 
+        if (!leftNode) {
+            if (rightNode) {
+                // Excess nodes in b need to be added
+                apply = appendPatch(apply,
+                    new VPatch(VPatch.INSERT, null, rightNode))
+            }
+        } else {
+            walk(leftNode, rightNode, patch, index)
+        }
 
-/***
- * Defines a virtual attribute at this point of the DOM. This is only valid
- * when called between elementOpenStart and elementOpenEnd.
- *
- * @param {string} name
- * @param {*} value
- */
-var attr = function(name, value) {
-  if (process.env.NODE_ENV !== 'production') {
-    assertInAttributes();
-  }
+        if (isVNode(leftNode) && leftNode.count) {
+            index += leftNode.count
+        }
+    }
 
-  argsBuilder.push(name, value);
-};
+    if (orderedSet.moves) {
+        // Reorder nodes last
+        apply = appendPatch(apply, new VPatch(
+            VPatch.ORDER,
+            a,
+            orderedSet.moves
+        ))
+    }
 
+    return apply
+}
 
-/**
- * Closes an open tag started with elementOpenStart.
- */
-var elementOpenEnd = function() {
-  if (process.env.NODE_ENV !== 'production') {
-    assertInAttributes();
-    setNotInAttributes();
-  }
+function clearState(vNode, patch, index) {
+    // TODO: Make this a single walk, not two
+    unhook(vNode, patch, index)
+    destroyWidgets(vNode, patch, index)
+}
 
-  elementOpen.apply(null, argsBuilder);
-};
+// Patch records for all destroyed widgets must be added because we need
+// a DOM node reference for the destroy function
+function destroyWidgets(vNode, patch, index) {
+    if (isWidget(vNode)) {
+        if (typeof vNode.destroy === "function") {
+            patch[index] = appendPatch(
+                patch[index],
+                new VPatch(VPatch.REMOVE, vNode, null)
+            )
+        }
+    } else if (isVNode(vNode) && (vNode.hasWidgets || vNode.hasThunks)) {
+        var children = vNode.children
+        var len = children.length
+        for (var i = 0; i < len; i++) {
+            var child = children[i]
+            index += 1
 
+            destroyWidgets(child, patch, index)
 
-/**
- * Closes an open virtual Element.
- *
- * @param {string} tag The element's tag.
- */
-var elementClose = function(tag) {
-  if (process.env.NODE_ENV !== 'production') {
-    assertNotInAttributes();
-  }
+            if (isVNode(child) && child.count) {
+                index += child.count
+            }
+        }
+    } else if (isThunk(vNode)) {
+        thunks(vNode, null, patch, index)
+    }
+}
 
-  parentNode();
-  nextSibling();
-};
+// Create a sub-patch for thunks
+function thunks(a, b, patch, index) {
+    var nodes = handleThunk(a, b)
+    var thunkPatch = diff(nodes.a, nodes.b)
+    if (hasPatches(thunkPatch)) {
+        patch[index] = new VPatch(VPatch.THUNK, null, thunkPatch)
+    }
+}
 
+function hasPatches(patch) {
+    for (var index in patch) {
+        if (index !== "a") {
+            return true
+        }
+    }
 
-/**
- * Declares a virtual Element at the current location in the document that has
- * no children.
- * @param {string} tag The element's tag.
- * @param {?string} key The key used to identify this element. This can be an
- *     empty string, but performance may be better if a unique value is used
- *     when iterating over an array of items.
- * @param {?Array<*>} statics An array of attribute name/value pairs of the
- *     static attributes for the Element. These will only be set once when the
- *     Element is created.
- * @param {...*} var_args Attribute name/value pairs of the dynamic attributes
- *     for the Element.
- */
-var elementVoid = function(tag, key, statics, var_args) {
-  if (process.env.NODE_ENV !== 'production') {
-    assertNotInAttributes();
-  }
+    return false
+}
 
-  elementOpen.apply(null, arguments);
-  elementClose.apply(null, arguments);
-};
+// Execute hooks when two nodes are identical
+function unhook(vNode, patch, index) {
+    if (isVNode(vNode)) {
+        if (vNode.hooks) {
+            patch[index] = appendPatch(
+                patch[index],
+                new VPatch(
+                    VPatch.PROPS,
+                    vNode,
+                    undefinedKeys(vNode.hooks)
+                )
+            )
+        }
 
+        if (vNode.descendantHooks || vNode.hasThunks) {
+            var children = vNode.children
+            var len = children.length
+            for (var i = 0; i < len; i++) {
+                var child = children[i]
+                index += 1
 
-/**
- * Declares a virtual Text at this point in the document.
- *
- * @param {string} value The text of the Text.
- */
-var text = function(value) {
-  if (process.env.NODE_ENV !== 'production') {
-    assertNotInAttributes();
-  }
+                unhook(child, patch, index)
 
-  var node = alignWithDOM('#text', null, value);
-  var data = getData(node);
+                if (isVNode(child) && child.count) {
+                    index += child.count
+                }
+            }
+        }
+    } else if (isThunk(vNode)) {
+        thunks(vNode, null, patch, index)
+    }
+}
 
-  if (data.text !== value) {
-    node.data = value;
-    data.text = value;
-  }
+function undefinedKeys(obj) {
+    var result = {}
 
-  nextSibling();
-};
+    for (var key in obj) {
+        result[key] = undefined
+    }
 
+    return result
+}
 
-/** */
-module.exports = {
-  elementOpenStart: elementOpenStart,
-  elementOpenEnd: elementOpenEnd,
-  elementOpen: elementOpen,
-  elementVoid: elementVoid,
-  elementClose: elementClose,
-  text: text,
-  attr: attr
-};
+// List diff, naive left to right reordering
+function reorder(aChildren, bChildren) {
+    // O(M) time, O(M) memory
+    var bChildIndex = keyIndex(bChildren)
+    var bKeys = bChildIndex.keys
+    var bFree = bChildIndex.free
 
+    if (bFree.length === bChildren.length) {
+        return {
+            children: bChildren,
+            moves: null
+        }
+    }
 
-}).call(this,require('_process'))
-},{"./alignment":3,"./attributes":4,"./node_data":5,"./traversal":8,"./walker":11,"_process":1}],11:[function(require,module,exports){
-/**
- * Copyright 2015 The Incremental DOM Authors. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS-IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+    // O(N) time, O(N) memory
+    var aChildIndex = keyIndex(aChildren)
+    var aKeys = aChildIndex.keys
+    var aFree = aChildIndex.free
 
-/**
- * @type {TreeWalker}
- */
-var walker_;
+    if (aFree.length === aChildren.length) {
+        return {
+            children: bChildren,
+            moves: null
+        }
+    }
 
+    // O(MAX(N, M)) memory
+    var newChildren = []
 
-/**
- * @return {TreeWalker} the current TreeWalker
- */
-var getWalker = function() {
-  return walker_;
-};
+    var freeIndex = 0
+    var freeCount = bFree.length
+    var deletedItems = 0
 
+    // Iterate through a and match a node in b
+    // O(N) time,
+    for (var i = 0 ; i < aChildren.length; i++) {
+        var aItem = aChildren[i]
+        var itemIndex
 
-/**
- * Sets the current TreeWalker
- * @param {TreeWalker} walker
- */
-var setWalker = function(walker) {
-  walker_ = walker;
-};
+        if (aItem.key) {
+            if (bKeys.hasOwnProperty(aItem.key)) {
+                // Match up the old keys
+                itemIndex = bKeys[aItem.key]
+                newChildren.push(bChildren[itemIndex])
 
+            } else {
+                // Remove old keyed items
+                itemIndex = i - deletedItems++
+                newChildren.push(null)
+            }
+        } else {
+            // Match the item in a with the next free item in b
+            if (freeIndex < freeCount) {
+                itemIndex = bFree[freeIndex++]
+                newChildren.push(bChildren[itemIndex])
+            } else {
+                // There are no free items in b to match with
+                // the free items in a, so the extra free nodes
+                // are deleted.
+                itemIndex = i - deletedItems++
+                newChildren.push(null)
+            }
+        }
+    }
 
-/** */
-module.exports = {
-  getWalker: getWalker,
-  setWalker: setWalker
-};
+    var lastFreeIndex = freeIndex >= bFree.length ?
+        bChildren.length :
+        bFree[freeIndex]
 
+    // Iterate through b and append any new keys
+    // O(M) time
+    for (var j = 0; j < bChildren.length; j++) {
+        var newItem = bChildren[j]
 
-},{}],12:[function(require,module,exports){
+        if (newItem.key) {
+            if (!aKeys.hasOwnProperty(newItem.key)) {
+                // Add any new keyed items
+                // We are adding new items to the end and then sorting them
+                // in place. In future we should insert new items in place.
+                newChildren.push(newItem)
+            }
+        } else if (j >= lastFreeIndex) {
+            // Add any leftover non-keyed items
+            newChildren.push(newItem)
+        }
+    }
+
+    var simulate = newChildren.slice()
+    var simulateIndex = 0
+    var removes = []
+    var inserts = []
+    var simulateItem
+
+    for (var k = 0; k < bChildren.length;) {
+        var wantedItem = bChildren[k]
+        simulateItem = simulate[simulateIndex]
+
+        // remove items
+        while (simulateItem === null && simulate.length) {
+            removes.push(remove(simulate, simulateIndex, null))
+            simulateItem = simulate[simulateIndex]
+        }
+
+        if (!simulateItem || simulateItem.key !== wantedItem.key) {
+            // if we need a key in this position...
+            if (wantedItem.key) {
+                if (simulateItem && simulateItem.key) {
+                    // if an insert doesn't put this key in place, it needs to move
+                    if (bKeys[simulateItem.key] !== k + 1) {
+                        removes.push(remove(simulate, simulateIndex, simulateItem.key))
+                        simulateItem = simulate[simulateIndex]
+                        // if the remove didn't put the wanted item in place, we need to insert it
+                        if (!simulateItem || simulateItem.key !== wantedItem.key) {
+                            inserts.push({key: wantedItem.key, to: k})
+                        }
+                        // items are matching, so skip ahead
+                        else {
+                            simulateIndex++
+                        }
+                    }
+                    else {
+                        inserts.push({key: wantedItem.key, to: k})
+                    }
+                }
+                else {
+                    inserts.push({key: wantedItem.key, to: k})
+                }
+                k++
+            }
+            // a key in simulate has no matching wanted key, remove it
+            else if (simulateItem && simulateItem.key) {
+                removes.push(remove(simulate, simulateIndex, simulateItem.key))
+            }
+        }
+        else {
+            simulateIndex++
+            k++
+        }
+    }
+
+    // remove all the remaining nodes from simulate
+    while(simulateIndex < simulate.length) {
+        simulateItem = simulate[simulateIndex]
+        removes.push(remove(simulate, simulateIndex, simulateItem && simulateItem.key))
+    }
+
+    // If the only moves we have are deletes then we can just
+    // let the delete patch remove these items.
+    if (removes.length === deletedItems && !inserts.length) {
+        return {
+            children: newChildren,
+            moves: null
+        }
+    }
+
+    return {
+        children: newChildren,
+        moves: {
+            removes: removes,
+            inserts: inserts
+        }
+    }
+}
+
+function remove(arr, index, key) {
+    arr.splice(index, 1)
+
+    return {
+        from: index,
+        key: key
+    }
+}
+
+function keyIndex(children) {
+    var keys = {}
+    var free = []
+    var length = children.length
+
+    for (var i = 0; i < length; i++) {
+        var child = children[i]
+
+        if (child.key) {
+            keys[child.key] = i
+        } else {
+            free.push(i)
+        }
+    }
+
+    return {
+        keys: keys,     // A hash of key name to index
+        free: free,     // An array of unkeyed item indices
+    }
+}
+
+function appendPatch(apply, patch) {
+    if (apply) {
+        if (isArray(apply)) {
+            apply.push(patch)
+        } else {
+            apply = [apply, patch]
+        }
+
+        return apply
+    } else {
+        return patch
+    }
+}
+
+},{"../vnode/handle-thunk":14,"../vnode/is-thunk":15,"../vnode/is-vnode":17,"../vnode/is-vtext":18,"../vnode/is-widget":19,"../vnode/vpatch":22,"./diff-props":24,"x-is-array":6}],26:[function(require,module,exports){
 var _ = require('./utils');
 
 var globalObject = _.memoGobalObject();
@@ -1360,7 +1353,7 @@ if (!Function.prototype.bind) {
   };
 }
 
-},{"./utils":20}],13:[function(require,module,exports){
+},{"./utils":34}],27:[function(require,module,exports){
 var Common = require('./common');
 var State = require('./state');
 var _ = require('./utils');
@@ -1595,7 +1588,7 @@ exports.componentToString = function(opts) {
   return serverSideComponent(opt);
 };
 
-},{"./common":12,"./state":19,"./utils":20}],14:[function(require,module,exports){
+},{"./common":26,"./state":33,"./utils":34}],28:[function(require,module,exports){
 var Common = require('./common');
 var _ = require('./utils');
 var Components = require('./component');
@@ -1897,64 +1890,27 @@ exports.renderWith = function(el) {
   var refs = context.refs || {};
   var props = context.props || {};
   var __innerComponents = context.__innerComponents || [];
+  var __rootListener = context.__rootListener || false;
 
-  var node = renderToNode(el, output, {
+  var renderContext = {
     waitingHandlers: waitingHandlers,
     refs: refs,
     props: props,
+    __rootListener: __rootListener,
     __innerComponents: __innerComponents
-  });
-  // need to find another place for that
-  if (!context.__rootListener) { // external listener here
-    _.each(waitingHandlers, function(handler) { // handler on each concerned node
-      console.log('reg on [data-nodeid="' + handler.id + '"] of types ' + handler.event.replace('on', ''));
-      _.on('[data-nodeid="' + handler.id + '"]', [handler.event.replace('on', '')], function() {
-        console.log('event on [data-nodeid="' + handler.id + '"] of type ' + handler.event);
-        handler.callback.apply({}, arguments);
-      });
-    });
-  }
+  };
+  output.setRenderContext(renderContext);
+  var node = renderToNode(el, output, renderContext);
   Common.markStop('Elem.renderWith');
   return node;
 };
 
-var DOMOuput = require('./output/incrementaldom');
+//var DOMOuput = require('./output/dom');
+//var DOMOuput = require('./output/incrementaldom');
+var DOMOuput = require('./output/virtualdom');
 
 exports.render = function(el, node, context) {
   Common.markStart('Elem.render');
-  /*var waitingHandlers = (context || {}).waitingHandlers || [];
-  var refs = (context || {}).refs || {};
-  var props = (context || {}).props || {};
-  var __innerComponents = (context || {}).__innerComponents || [];
-  var doc = document;
-  if (node.ownerDocument) {
-    doc = node.ownerDocument;
-  }
-  if (_.isString(node)) {
-    node = doc.querySelector(node);
-  }
-  if (!_.isUndefined(node) && !_.isNull(node)) {
-    var htmlNode = renderToNode(el, doc, {
-      root: node,
-      waitingHandlers: waitingHandlers,
-      refs: refs,
-      props: props,
-      __innerComponents: __innerComponents
-    });
-    while (!_.isUndefined(node) && !_.isNull(node) && node.firstChild) {
-      node.removeChild(node.firstChild);
-    }
-    _.each(htmlNode, function(n) {
-      if (!_.isUndefined(node) && !_.isNull(node)) node.appendChild(n);
-    });
-    if (!(context && context.__rootListener)) { // external listener here
-      _.each(waitingHandlers, function(handler) { // handler on each concerned node
-        _.on('[data-nodeid="' + handler.id + '"]', [handler.event.replace('on', '')], function() {
-          handler.callback.apply({}, arguments);
-        });
-      });
-    }
-  }*/
   var output = DOMOuput(context);
   exports.renderWith(el, context, output).render(node);
   Common.markStop('Elem.render');
@@ -2023,7 +1979,7 @@ if (typeof define === 'function' && define.amd) {
   });
 }
 
-},{"./common":12,"./component":13,"./events":15,"./output/incrementaldom":16,"./output/output":17,"./output/stringify":18,"./state":19,"./utils":20,"./webcomponent":21}],15:[function(require,module,exports){
+},{"./common":26,"./component":27,"./events":29,"./output/output":30,"./output/stringify":31,"./output/virtualdom":32,"./state":33,"./utils":34,"./webcomponent":35}],29:[function(require,module,exports){
 var _ = require('./utils');
 
 var eventSplitter = /\s+/;
@@ -2069,91 +2025,7 @@ module.exports = function() {
   };
 };
 
-},{"./utils":20}],16:[function(require,module,exports){
-var _ = require('../utils');
-var Common = require('../common');
-
-var IncrementalDOM = require('incremental-dom');
-var elementOpen = IncrementalDOM.elementOpen;
-var elementClose = IncrementalDOM.elementClose;
-var elementVoid = IncrementalDOM.elementVoid;
-var text = IncrementalDOM.text;
-var attr = IncrementalDOM.attr;
-var patch = IncrementalDOM.patch;
-
-module.exports = function domOutput(ctx) {
-  ctx = ctx || {};
-
-  var doc = document;
-
-  function node(name, attrs, ns) {
-    attrs = attrs || [];
-    var children = [];
-    return {
-      appendChild: function(child) {
-        children.push(child);
-      },
-      render: function(node) {
-
-        function inner() {
-          var selfCloseTag = _.contains(Common.voidElements, name.toUpperCase()) && children.length === 0;
-          var newAttrs = [];
-          _.each(attrs, function(o) {
-            newAttrs.push(o.key);
-            newAttrs.push(o.value);
-          });
-          if (selfCloseTag) {
-            elementVoid.apply(null, [name, attrs.key || '', null].concat(newAttrs));
-          } else {
-            elementOpen.apply(null, [name, attrs.key || '', null].concat(newAttrs));
-            _.each(children, function(c) {
-              c.render();
-            });
-            elementClose(name);
-          }
-        }
-
-        if (node) {
-          var doc = document;
-          if (node.ownerDocument) {
-            doc = node.ownerDocument;
-          }
-          if (_.isString(node)) {
-            node = doc.querySelector(node);
-          }
-          patch(node, inner);
-        } else {
-          inner();
-        }
-      }
-    }
-  }
-
-  function createElementNS(ns, name, attrs) {
-    return node(name, attrs, ns);
-  }
-
-  function createElement(name, attrs) {
-    return node(name, attrs);
-  }
-
-  function createTextNode(str) {
-    return {
-      render: function() {
-        text(str);
-      }
-    };
-  }
-
-  return {
-    name: 'IncrementalDOMOuput',
-    createTextNode: createTextNode,
-    createElementNS: createElementNS,
-    createElement: createElement
-  };
-}
-
-},{"../common":12,"../utils":20,"incremental-dom":2}],17:[function(require,module,exports){
+},{"./utils":34}],30:[function(require,module,exports){
 var _ = require('../utils');
 
 module.exports = function jsonOutput(ctx) {
@@ -2200,7 +2072,7 @@ module.exports = function jsonOutput(ctx) {
   };
 }
 
-},{"../utils":20}],18:[function(require,module,exports){
+},{"../utils":34}],31:[function(require,module,exports){
 var Common = require('../common');
 var _ = require('../utils');
 
@@ -2276,7 +2148,130 @@ module.exports = function stringifyDoc(ctx) {
   };
 }
 
-},{"../common":12,"../utils":20}],19:[function(require,module,exports){
+},{"../common":26,"../utils":34}],32:[function(require,module,exports){
+var _ = require('../utils');
+var Common = require('../common');
+
+var diff = require('virtual-dom/diff');
+var patch = require('virtual-dom/patch');
+var VDOMCreateElement = require('virtual-dom/create-element');
+var VNode = require('virtual-dom/vnode/vnode');
+var VText = require('virtual-dom/vnode/vtext');
+
+var treeCache = {};
+
+module.exports = function domOutput(ctx) {
+  ctx = ctx || {};
+
+  var renderContext = {};
+  var doc = document;
+
+  function setRenderContext(c) {
+    renderContext = c;
+  }
+
+  function node(name, attrs, ns) {
+    attrs = attrs || [];
+    var children = [];
+    return {
+      appendChild: function(child) {
+        children.push(child);
+      },
+      render: function(node) {
+        function getAttrs() {
+          var newAttrs = {};
+          var nodeId = undefined;
+          newAttrs.attributes = {};
+          _.each(attrs, function(o) {
+            if (o.key === 'data-nodeid') {
+              nodeId = o.value;
+            }
+            if (o.key === 'style') {
+              newAttrs.attributes.style = o.value;
+            } else if (o.key === 'class') {
+              newAttrs.attributes['class'] = o.value;
+            } else {
+              newAttrs.attributes[o.key] = o.value;
+            }
+          });
+          if (!renderContext.__rootListener) { // external listener here
+            _.each(renderContext.waitingHandlers, function(handler) { // handler on each concerned node
+              if (handler.id === nodeId) {
+                newAttrs[handler.event] = function() {
+                  handler.callback.apply({}, arguments);
+                };
+              }
+            });
+          }
+          return newAttrs;
+        }
+
+        if (node) {
+          var doc = document;
+          if (node.ownerDocument) {
+            doc = node.ownerDocument;
+          }
+          if (_.isString(node)) {
+            node = doc.querySelector(node);
+          }
+          if (node !== null) {
+            var rootId = node.getAttribute('data-rootid');
+            if (!rootId) {
+              rootId = _.uniqueId('data-rootid-');
+              node.setAttribute('data-rootid', rootId);
+            }
+            var oldDom = treeCache[rootId];
+            if (!oldDom) {
+              var tree = new VNode(name, getAttrs(), _.map(children, function(c) { return c.render(); }), attrs.key, ns);
+              var rootNode = VDOMCreateElement(tree);
+              node.appendChild(rootNode);
+              treeCache[rootId] = {
+                tree: tree,
+                rootNode: rootNode
+              };
+            } else {
+              var newTree = new VNode(name, getAttrs(), _.map(children, function(c) { return c.render(); }), attrs.key, ns);
+              var patches = diff(oldDom.tree, newTree);
+              var rootNode = patch(oldDom.rootNode, patches);
+              treeCache[rootId] = {
+                tree: newTree,
+                rootNode: rootNode
+              };
+            }
+          }
+        } else {
+          return new VNode(name, getAttrs(), _.map(children, function(c) { return c.render(); }));
+        }
+      }
+    }
+  }
+
+  function createElementNS(ns, name, attrs) {
+    return node(name, attrs, ns);
+  }
+
+  function createElement(name, attrs) {
+    return node(name, attrs);
+  }
+
+  function createTextNode(str) {
+    return {
+      render: function() {
+        return new VText(str);
+      }
+    };
+  }
+
+  return {
+    name: 'VirtualDOMOuput',
+    createTextNode: createTextNode,
+    createElementNS: createElementNS,
+    createElement: createElement,
+    setRenderContext: setRenderContext
+  };
+}
+
+},{"../common":26,"../utils":34,"virtual-dom/create-element":2,"virtual-dom/diff":3,"virtual-dom/patch":7,"virtual-dom/vnode/vnode":21,"virtual-dom/vnode/vtext":23}],33:[function(require,module,exports){
 var _ = require('./utils');
 
 module.exports = function(mod) {
@@ -2331,7 +2326,7 @@ module.exports = function(mod) {
   });
 };
 
-},{"./utils":20}],20:[function(require,module,exports){
+},{"./utils":34}],34:[function(require,module,exports){
 (function (global){
 function getGlobalObject() {
   // Workers don’t have `window`, only `self`
@@ -2663,12 +2658,10 @@ function hasFocus(elem) {
   return elem === document.activeElement && (!document.hasFocus || document.hasFocus()) && !!(elem.type || elem.href || ~elem.tabIndex);
 }
 
-function on(node, types, callback) {
-  try {
-  var actual = isString(node) ? document.querySelector(node) : node;
+function on(nodeExpression, types, callback) {
+  var actual = isString(nodeExpression) ? document.querySelector(nodeExpression) : nodeExpression;
   each(types, function(type) {
     if (actual && actual !== null) {
-      if (types.length < 10) console.log('add listener for ', types);
       if (actual.addEventListener) {
         actual.addEventListener(type, callback, false); // does not work in ff 3.5 without false
       } else if (actual.attachEvent) {
@@ -2676,9 +2669,6 @@ function on(node, types, callback) {
       }
     }
   });
-} catch(e) {
-  console.error(e);
-}
 }
 
 function off(node, types, callback) {
@@ -2775,7 +2765,7 @@ exports.memoize = memoize;
 exports.memoGobalObject = memoize(getGlobalObject);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],21:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 var EventBus = require('./events');
 var Utils = require('./utils');
 var registrationFunction = undefined
@@ -2878,5 +2868,5 @@ if (registrationFunction) {
   };
 }
 
-},{"./events":15,"./utils":20}]},{},[14])(14)
+},{"./events":29,"./utils":34}]},{},[28])(28)
 });

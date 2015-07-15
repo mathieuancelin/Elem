@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Demos</title>
+        <link href="../fonts/Montserrat.css" rel="stylesheet" type="text/css">
+        <link rel="stylesheet" href="../css/bootstrap.min.css">
+    </head>
+    <body>
+        <div class="container-fluid">
+            <div class="row">
+                <div id="demo1" class="col-md-6"></div>
+                <div id="demo2" class="col-md-6"></div>
+            </div>
+        </div>
+        <script src="../../dist/elem.js" type="text/javascript"></script>
+        <script src="./moment.min.js" type="text/javascript"></script>
+        <script type="text/javascript">
+
+          var commonState = Elem.state({ name: 'Hello' });
+
+          function TextBox() {
+              function updateModel(e) {
+                  commonState.set({name: e.target.value});
+              }
+              return Elem.el('div', { className: 'col-md-4' }, [
+                  Elem.el('h3', 'Type your name here'),
+                  Elem.el('form', { role: 'form' }, [
+                      Elem.el('div', { className: ['form-group', 'col-md-10'] },
+                          Elem.el('input', {
+                              placeholder: 'Type your name',
+                              type: 'text',
+                              className: 'form-control',
+                              value: commonState().name,
+                              onkeydown: updateModel,
+                              onkeyup: updateModel,
+                              onkeypress: updateModel,
+                              onchange: updateModel
+                          }, [])
+                      )
+                  ])
+              ]);
+          }
+
+          Elem.render(TextBox(), '#demo1');
+
+          function Displays(state, props) {
+              return Elem.el('div', { className: 'col-md-4' }, [
+                  Elem.el('h3', 'Displays'),
+                  Elem.el('ul', { className: 'list-group' }, [
+                      Elem.el('li', { className: 'list-group-item' }, 'Name : ' + state().name || ''),
+                      Elem.el('li', { className: 'list-group-item' }, 'Name : ' + state().name || ''),
+                      Elem.el('li', { className: 'list-group-item' }, 'Name : ' + state().name || ''),
+                      Elem.el('li', { className: 'list-group-item' }, 'Name : ' + state().name || ''),
+                  ])
+              ]);
+          }
+
+          Elem.component({
+              initialState: function() {
+                return commonState.all();
+              },
+              init: function() {
+                var that = this;
+                commonState.onChange(function() {
+                  that.replaceState(commonState.all());
+                });
+              },
+              render: Displays
+          })({}).renderTo('#demo2');
+        </script>
+    </body>
+</html>

@@ -328,12 +328,10 @@ function hasFocus(elem) {
   return elem === document.activeElement && (!document.hasFocus || document.hasFocus()) && !!(elem.type || elem.href || ~elem.tabIndex);
 }
 
-function on(node, types, callback) {
-  try {
-  var actual = isString(node) ? document.querySelector(node) : node;
+function on(nodeExpression, types, callback) {
+  var actual = isString(nodeExpression) ? document.querySelector(nodeExpression) : nodeExpression;
   each(types, function(type) {
     if (actual && actual !== null) {
-      if (types.length < 10) console.log('add listener for ', types);
       if (actual.addEventListener) {
         actual.addEventListener(type, callback, false); // does not work in ff 3.5 without false
       } else if (actual.attachEvent) {
@@ -341,9 +339,6 @@ function on(node, types, callback) {
       }
     }
   });
-} catch(e) {
-  console.error(e);
-}
 }
 
 function off(node, types, callback) {

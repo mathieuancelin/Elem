@@ -3,7 +3,12 @@ var _ = require('../utils');
 module.exports = function domOutput(ctx) {
   ctx = ctx || {};
 
+  var renderContext = {};
   var doc = document;
+
+  function setRenderContext(c) {
+    renderContext = c;
+  }
 
   function node(name, attrs, ns) {
     attrs = attrs || [];
@@ -39,6 +44,13 @@ module.exports = function domOutput(ctx) {
           if (!_.isUndefined(node) && !_.isNull(node)) {
             node.appendChild(elem);
           }
+          if (!renderContext.__rootListener) { // external listener here
+            _.each(renderContext.waitingHandlers, function(handler) { // handler on each concerned node
+              _.on('[data-nodeid="' + handler.id + '"]', [handler.event.replace('on', '')], function() {
+                handler.callback.apply({}, arguments);
+              });
+            });
+          }
         } else {
           return elem;
         }
@@ -66,6 +78,7 @@ module.exports = function domOutput(ctx) {
     name: 'DOMOuput',
     createTextNode: createTextNode,
     createElementNS: createElementNS,
-    createElement: createElement
+    createElement: createElement,
+    setRenderContext: setRenderContext
   };
 }

@@ -89,7 +89,7 @@ var Clock = Elem.component({
     setInterval(update, 1000);
   },
   render: function(state, props) {
-    return Elem.el('div', { style: Style.circle }, [
+    return Elem.el('div', { className: 'pouet', style: Style.circle }, [
       Elem.el('div', { style: Style.circleHour.extend({ transform: 'rotate(' + state().hours + 'deg)'    , '-webkit-transform': 'rotate(' + state().hours + 'deg)'  , '-moz-transform': 'rotate(' + state().hours + 'deg)'  , '-ms-transform': 'rotate(' + state().hours + 'deg)'   }) }, ''),
       Elem.el('div', { style: Style.circleMinute.extend({ transform: 'rotate(' + state().minutes + 'deg)', '-webkit-transform': 'rotate(' + state().minutes + 'deg)', '-moz-transform': 'rotate(' + state().minutes + 'deg)', '-ms-transform': 'rotate(' + state().minutes + 'deg)' }) }, ''),
       Elem.el('div', { style: Style.circleSecond.extend({ transform: 'rotate(' + state().seconds + 'deg)', '-webkit-transform': 'rotate(' + state().seconds + 'deg)', '-moz-transform': 'rotate(' + state().seconds + 'deg)', '-ms-transform': 'rotate(' + state().seconds + 'deg)' }) }, ''),
