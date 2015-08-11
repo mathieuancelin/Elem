@@ -269,7 +269,12 @@ exports.jsx = function(name, attrs) {
   for (var _len = arguments.length, children = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
     children[_key - 2] = arguments[_key];
   }
-  return attrs === null ? vel(name, children) : el(name, attrs, children);
+  
+  var flatChildren = children;
+  if (children !== undefined && children.length === 1) {
+      flatChildren = children[0];
+  }
+  return attrs === null ? vel(name, flatChildren) : el(name, attrs, flatChildren);
 }
 
 exports.sel = function(name, children) {
