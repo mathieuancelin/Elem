@@ -521,6 +521,13 @@ function el(name, attrs, children) {
       return !_.isUndefined(item);
     }).value();
   }
+  if(_.isFunction(name)) {
+    var context = {
+      props: attrs,
+      children: children
+    };
+    return name.bind(context)(attrs, children);
+  }
   var selfCloseTag = _.contains(Common.voidElements, name.toUpperCase()) && (_.isNull(children) || _.isUndefined(children) || (_.isArray(children) && children.length === 0));
   var attrsArray = attributesToArray(attrs);
   attrsArray.push(asAttribute('data-nodeid', _.escape(nodeId)));
@@ -681,6 +688,9 @@ exports.text = function(text) {
 };
 
 exports.render = function(el, node, context) {
+  if (_.isFunction(el)) {
+    return exports.render(el(), node, context);
+  }
   Common.markStart('Elem.render');
   var waitingHandlers = (context || {}).waitingHandlers || [];
   var refs = (context || {}).refs || {};
