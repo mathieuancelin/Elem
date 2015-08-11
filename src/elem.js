@@ -265,6 +265,10 @@ exports.renderToStaticHtml = function(el) {
 
 exports.el = el;
 
+exports.jsx = function(name, attrs, children) {
+  return attrs === null ? vel(name, children) : el(name, attrs, children);
+}
+
 exports.sel = function(name, children) {
   return el(name, {}, children);
 }; // simple node sel(name, children)
