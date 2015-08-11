@@ -274,6 +274,22 @@ Elem.component({
 
 You can also get the root DOM node by using `context.getDOMNode()`.
 
+But, I like jsx syntax, how can I use it ?
+------------------------------------------
+
+If you use babel, add jsxPragma=Elem.jsx to options.
+
+```javascript
+var Elem = require('elemjs');
+
+Elem.render(
+  <h1>Hello jsx</h1>,
+  document.body
+);
+```
+
+Very simple, isn't it?
+
 But you can't render that stuff server side (isomorphic apps), right ?
 ---------------------------------------------
 
