@@ -272,7 +272,7 @@ exports.renderToStaticHtml = function(el) {
 
 exports.el = el;
 
-let svgElements = ['altGlyph', 'altGlyphDef', 'altGlyphItem', 'animate',
+var svgElements = ['altGlyph', 'altGlyphDef', 'altGlyphItem', 'animate',
   'animateColor', 'animateMotion', 'animateTransform',
   'circle', 'clipPath', 'color-profile', 'cursor', 'defs',
   'desc', 'ellipse', 'feBlend', 'feColorMatrix', 'feComponentTransfer',

@@ -506,9 +506,16 @@ function el(name, attrs, children) {
     children.shift();
     children.shift();
   }
-  name = _.escape(name) || 'unknown';
   attrs = attrs || {};
   children = wrapChildren(children);
+  if(_.isFunction(name)) {
+    var context = {
+      props: attrs,
+      children: children
+    };
+    return name.bind(context)(attrs, children);
+  }
+  name = _.escape(name) || 'unknown';
   if (_.isRegExp(children) || _.isUndefined(children) || _.isNull(children)) children = [];
   if (_.isArray(children)) {
     children = _.chain(children).map(function(child) {
@@ -520,13 +527,6 @@ function el(name, attrs, children) {
     }).filter(function(item) {
       return !_.isUndefined(item);
     }).value();
-  }
-  if(_.isFunction(name)) {
-    var context = {
-      props: attrs,
-      children: children
-    };
-    return name.bind(context)(attrs, children);
   }
   var selfCloseTag = _.contains(Common.voidElements, name.toUpperCase()) && (_.isNull(children) || _.isUndefined(children) || (_.isArray(children) && children.length === 0));
   var attrsArray = attributesToArray(attrs);
@@ -642,16 +642,30 @@ exports.renderToStaticHtml = function(el) {
 
 exports.el = el;
 
+var svgElements = ['altGlyph', 'altGlyphDef', 'altGlyphItem', 'animate',
+  'animateColor', 'animateMotion', 'animateTransform',
+  'circle', 'clipPath', 'color-profile', 'cursor', 'defs',
+  'desc', 'ellipse', 'feBlend', 'feColorMatrix', 'feComponentTransfer',
+  'feComposite', 'feConvolveMatrix', 'feDiffuseLighting', 'feDisplacementMap',
+  'feDistantLight', 'feFlood', 'feFuncA', 'feFuncB', 'feFuncG', 'feFuncR',
+  'feGaussianBlur', 'feImage', 'feMerge', 'feMergeNode', 'feMorphology',
+  'feOffset', 'fePointLight', 'feSpecularLighting', 'feSpotLight',
+  'feTile', 'feTurbulence', 'filter', 'font', 'font-face', 'font-face-format',
+  'font-face-name', 'font-face-src', 'font-face-uri', 'foreignObject', 'g',
+  'glyph', 'glyphRef', 'hkern', 'image', 'line', 'linearGradient', 'marker',
+  'mask', 'metadata', 'missing-glyph', 'mpath', 'path', 'pattern', 'polygon',
+  'polyline', 'radialGradient', 'rect', 'set', 'stop', 'svg', 'switch', 'symbol',
+  'text', 'textPath', 'tref', 'tspan', 'use', 'view', 'vkern'];
+
 exports.jsx = function(name, attrs) {
   for (var _len = arguments.length, children = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
     children[_key - 2] = arguments[_key];
   }
-
-  var flatChildren = children;
-  if (children !== undefined && children.length === 1) {
-      flatChildren = children[0];
+  children = [].concat.apply([], children);
+  if (_.contains(svgElements, type)) {
+    return exports.svg(name, attrs || {}, children || []);
   }
-  return el(name, attrs || {}, flatChildren);
+  return el(name, attrs || {}, children || []);
 }
 
 exports.sel = function(name, children) {
@@ -762,24 +776,81 @@ exports.predicate = function(predicate, what) {
     }
   }
 };
-exports.style = function(obj) {
+
+function autoExtend(base, custom) {
+  var final = _.extend({}, base, custom);
+  final.extend = function (custom2) {
+    return autoExtend(final, custom2);
+  };
+  return final;
+}
+
+exports.style = function(obj, type, media) {
+  var stylesheetElement = undefined;
+  var mounted = false;
   var result = {};
-  var keys = _.keys(obj);
-  _.each(keys, function(key) {
-    var clazz = obj[key];
+  var sheet = obj;
+  while (sheet.extend) {
+    if (sheet.extend) {
+      var value = sheet.extend;
+      delete sheet.extend;
+      sheet = _.extend({}, value, sheet);
+    }
+  }
+  var keys = _.keys(sheet);
+  keys.forEach(function (key) {
+    var clazz = sheet[key];
     if (_.isObject(clazz)) {
+      // Handle 'class' that extends other 'classes'
+      while (clazz.extend) {
+        if (clazz.extend) {
+          var value = clazz.extend;
+          delete clazz.extend;
+          clazz = _.extend({}, value, clazz);
+        }
+      }
+      // Add an extend function to a 'class'
       result[key] = _.extend({}, {
-        extend: function(o) {
-          return _.extend({}, o, clazz);
+        extend: function extend(o) {
+          return autoExtend(clazz, o);
         }
       }, clazz);
     }
   });
-  result.extend = _.extend({}, {
-    extend: function(o) {
-      return _.extend({}, o, obj);
+  // Add an extend function to the sheet
+  result.extend = function (o) {
+    return autoExtend(sheet, o);
+  };
+  result.toString = function (asClasses) {
+    return _.keys(result).filter(function (key) {
+      return key !== 'extend' && key !== 'mount' && key !== 'unmount' && key !== 'toString';
+    }).map(function (key) {
+      var value = result[key];
+      return (asClasses ? '.' : '') + _.dasherize(key) + ' {\n' + _.keys(value).filter(function (k) {
+        return k !== 'extend';
+      }).map(function (k) {
+        return '    ' + _.dasherize(k) + ': ' + value[k] + ';';
+      }).join('\n') + '\n}';
+    }).join('\n');
+  };
+  result.mount = function (asClasses) {
+    if (!mounted && typeof document !== 'undefined') {
+      stylesheetElement = document.createElement('style');
+      if (type) stylesheetElement.setAttribute('type', type);
+      if (media) stylesheetElement.setAttribute('media', media);
+      stylesheetElement.innerHTML = result.toString(asClasses);
+      document.head.appendChild(stylesheetElement);
+      mounted = true;
     }
-  }, obj);
+    return result;
+  };
+  result.unmount = function () {
+    if (mounted && typeof document !== 'undefined') {
+      stylesheetElement.parentNode.removeChild(stylesheetElement);
+      mounted = false;
+    }
+    return result;
+  };
   return result;
 };
 
