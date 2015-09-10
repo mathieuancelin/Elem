@@ -272,16 +272,30 @@ exports.renderToStaticHtml = function(el) {
 
 exports.el = el;
 
+let svgElements = ['altGlyph', 'altGlyphDef', 'altGlyphItem', 'animate',
+  'animateColor', 'animateMotion', 'animateTransform',
+  'circle', 'clipPath', 'color-profile', 'cursor', 'defs',
+  'desc', 'ellipse', 'feBlend', 'feColorMatrix', 'feComponentTransfer',
+  'feComposite', 'feConvolveMatrix', 'feDiffuseLighting', 'feDisplacementMap',
+  'feDistantLight', 'feFlood', 'feFuncA', 'feFuncB', 'feFuncG', 'feFuncR',
+  'feGaussianBlur', 'feImage', 'feMerge', 'feMergeNode', 'feMorphology',
+  'feOffset', 'fePointLight', 'feSpecularLighting', 'feSpotLight',
+  'feTile', 'feTurbulence', 'filter', 'font', 'font-face', 'font-face-format',
+  'font-face-name', 'font-face-src', 'font-face-uri', 'foreignObject', 'g',
+  'glyph', 'glyphRef', 'hkern', 'image', 'line', 'linearGradient', 'marker',
+  'mask', 'metadata', 'missing-glyph', 'mpath', 'path', 'pattern', 'polygon',
+  'polyline', 'radialGradient', 'rect', 'set', 'stop', 'svg', 'switch', 'symbol',
+  'text', 'textPath', 'tref', 'tspan', 'use', 'view', 'vkern'];
+
 exports.jsx = function(name, attrs) {
   for (var _len = arguments.length, children = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
     children[_key - 2] = arguments[_key];
   }
-
-  var flatChildren = children;
-  if (children !== undefined && children.length === 1) {
-      flatChildren = children[0];
+  children = [].concat.apply([], children);
+  if (_.contains(svgElements, type)) {
+    return exports.svg(name, attrs || {}, children || []);
   }
-  return el(name, attrs || {}, flatChildren);
+  return el(name, attrs || {}, children || []);
 }
 
 exports.sel = function(name, children) {
