@@ -509,11 +509,16 @@ function el(name, attrs, children) {
   attrs = attrs || {};
   children = wrapChildren(children);
   if(_.isFunction(name)) {
+    var redraw = currentRedraw;
     var context = {
       props: attrs,
-      children: children
+      children: children,
+      redraw: redraw,
+      deferRedraw: function() {
+        setTimeout(redraw, 0);
+      }
     };
-    return name.bind(context)(attrs, children);
+    return name.bind(context)(attrs, children, currentRedraw);
   }
   name = _.escape(name) || 'unknown';
   if (_.isRegExp(children) || _.isUndefined(children) || _.isNull(children)) children = [];
@@ -701,14 +706,32 @@ exports.text = function(text) {
   return el('span', {}, text);
 };
 
+var currentRedraw;
+
 exports.render = function(el, node, context) {
+  var props = (context || {}).props || {};
   if (_.isFunction(el)) {
-    return exports.render(el(), node, context);
+    var ctx = {
+      props: props,
+      children: []
+    };
+    var redraw = function() {
+      currentRedraw = ctx.redraw;
+      try {
+        return exports.render(el.bind(ctx)(props, [], redraw), node, context);
+      } finally {
+        currentRedraw = undefined;
+      }
+    };
+    ctx.redraw = redraw;
+    ctx.deferRedraw = function() {
+      setTimeout(ctx.redraw, 0);
+    };
+    return redraw();
   }
   Common.markStart('Elem.render');
   var waitingHandlers = (context || {}).waitingHandlers || [];
   var refs = (context || {}).refs || {};
-  var props = (context || {}).props || {};
   var __innerComponents = (context || {}).__innerComponents || [];
   var doc = document;
   if (node.ownerDocument) {
