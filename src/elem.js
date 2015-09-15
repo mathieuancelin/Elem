@@ -10,7 +10,9 @@ exports.svgNS = "http://www.w3.org/2000/svg";
 
 function styleToString(attrs) {
   if (_.isUndefined(attrs)) return '';
-  var attrsArray = _.map(_.keys(attrs), function(key) {
+  var attrsArray = _.filter(function(key) {
+    return key !== 'extend' && key !== 'mount' && key !== 'unmount' && key !== 'toString';
+  }).map(_.keys(attrs), function(key) {
     var keyName = _.dasherize(key);
     if (key === 'className') {
       keyName = 'class';
