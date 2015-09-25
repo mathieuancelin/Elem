@@ -514,14 +514,14 @@ function el(name, attrs, children) {
   if(_.isFunction(name)) {
     var redraw = currentRedraw;
     var context = {
-      props: attrs,
+      props: _.extend({}, attrs, { children: children }),
       children: children,
       redraw: redraw,
       deferRedraw: function() {
         setTimeout(redraw, 0);
       }
     };
-    return name.bind(context)(attrs, children, currentRedraw);
+    return name.bind(context)(context.props, context.children, context.redraw);
   }
   name = _.escape(name) || 'unknown';
   if (_.isRegExp(children) || _.isUndefined(children) || _.isNull(children)) children = [];
@@ -670,7 +670,7 @@ exports.jsx = function(name, attrs) {
     children[_key - 2] = arguments[_key];
   }
   children = [].concat.apply([], children);
-  if (_.contains(svgElements, type)) {
+  if (_.contains(svgElements, name)) {
     return exports.svg(name, attrs || {}, children || []);
   }
   return el(name, attrs || {}, children || []);
@@ -715,13 +715,13 @@ exports.render = function(el, node, context) {
   var props = (context || {}).props || {};
   if (_.isFunction(el)) {
     var ctx = {
-      props: props,
+      props: _.extend({}, props, { children: [] }),
       children: []
     };
     var redraw = function() {
       currentRedraw = ctx.redraw;
       try {
-        return exports.render(el.bind(ctx)(props, [], redraw), node, context);
+        return exports.render(el.bind(ctx)(ctx.props, [], redraw), node, context);
       } finally {
         currentRedraw = undefined;
       }
