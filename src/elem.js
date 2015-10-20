@@ -177,6 +177,8 @@ function el(name, attrs, children) {
       _.each(attrsArray, function(item) {
         if (elemName && elemName === 'input' && item.key === 'value') {
           element.value = item.value;
+        } else if (elemName && elemName === 'input' && item.key === 'indeterminate')  {
+          element.indeterminate = item.value;
         } else {
           element.setAttribute(item.key, item.value);
         }
