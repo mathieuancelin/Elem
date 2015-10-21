@@ -80,7 +80,6 @@ function extractEventHandlers(attrs, nodeId, context) {
         });
       }
     }
-    if (keyName === 'ref' && context && context.refs) context.refs[attrs[key]] = buildRef(nodeId);
   });
 }
 
@@ -182,6 +181,7 @@ function el(name, attrs, children) {
     },
     toHtmlNode: function(doc, context) {
       var elemName = this.name;
+	  if (attrs.ref && context && context.refs) context.refs[attrs.ref] = buildRef(nodeId);
       extractEventHandlers(attrs, nodeId, context);
       var element = undefined;
       if (svg) {
@@ -198,6 +198,16 @@ function el(name, attrs, children) {
           element.setAttribute(item.key, item.value);
         }
       });
+	  if (!(context && context.__rootListener)) { // external listener here
+	    _.each(_.keys(attrs), function(key) {
+	      var keyName = _.dasherize(key);
+	      if (_.startsWith(keyName, 'on')) {
+	        _.on(element, [keyName.toLowerCase().replace('on', '')], function() {
+              attrs[key].apply({}, arguments);
+            });
+          }
+        });
+	  }
 
       function appendSingleNode(__children, __element) {
         if (_.isNumber(__children)) {
@@ -389,13 +399,6 @@ exports.render = function(el, node, context) {
     _.each(htmlNode, function(n) {
       if (!_.isUndefined(node) && !_.isNull(node)) node.appendChild(n);
     });
-    if (!(context && context.__rootListener)) { // external listener here
-      _.each(waitingHandlers, function(handler) { // handler on each concerned node
-        _.on('[data-nodeid="' + handler.id + '"]', [handler.event.replace('on', '')], function() {
-          handler.callback.apply({}, arguments);
-        });
-      });
-    }
   }
   Common.markStop('Elem.render');
 };
