@@ -512,15 +512,37 @@ function el(name, attrs, children) {
   children = wrapChildren(children);
   if(_.isFunction(name)) {
     var redraw = currentRedraw;
+    var selector = '[data-funccallid="' + nodeId + '"]';
+    var getNode = function() {
+      return document.querySelector('[data-funccallid="' + nodeId + '"]');
+    };
+    var myself = {
+      id: nodeId,
+      selector: selector,
+      getNode: getNode,
+      redraw: function(element) {
+        var oldNode = getNode();
+        var parentNode = oldNode.parentNode;
+        var newNode = renderToNode(element, document, {
+          root: parentNode,
+          waitingHandlers: [], refs: {}, props: {}, __innerComponents: []
+        })[0];
+        parentNode.replaceChild(newNode, oldNode);
+      }
+    };
     var context = {
-      props: _.extend({}, attrs, { children: children }),
+      props: _.extend({}, attrs, { children: children, myself: myself }),
       children: children,
       redraw: redraw,
       deferRedraw: function() {
         setTimeout(redraw, 0);
       }
     };
-    return name.bind(context)(context.props, context.children, context.redraw);
+    var thunk = name.bind(context)(context.props, context.children, context.redraw);
+    if (thunk.setAttribute) {
+      thunk.setAttribute('data-funccallid', nodeId);
+    }
+    return thunk;
   }
   name = _.escape(name) || 'unknown';
   if (_.isRegExp(children) || _.isUndefined(children) || _.isNull(children)) children = [];
@@ -545,6 +567,9 @@ function el(name, attrs, children) {
     children: children,
     isElement: true,
     nodeId: nodeId,
+    setAttribute: function(key, value) {
+      attrsArray.push({ key: key, value: value });
+    },
     toJsonString: function(pretty) {
       if (pretty) return JSON.stringify(this, null, 2);
       return JSON.stringify(this);
