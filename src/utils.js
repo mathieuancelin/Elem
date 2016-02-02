@@ -1,13 +1,13 @@
 function getGlobalObject() {
-  // Workers don’t have `window`, only `self`
-  if (typeof self !== undefined) {
-    return self;
-  }
   if (typeof global !== undefined) {
     return global;
   }
   if (typeof window !== undefined) {
     return window;
+  }
+  // Workers don’t have `window`, only `self`
+  if (typeof self !== undefined) {
+    return self;
   }
   // Not all environments allow eval and Function
   // Use only as a last resort:
